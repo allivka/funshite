@@ -33,8 +33,8 @@ impl Canvas {
     fn fix(&self, mut pos: Vec2isize) -> Vec2isize {
         pos.0 = min(pos.0, self.width);
         pos.0 = min(pos.1, self.height);
-        // pos.0 = max(pos.0, 0);
-        // pos.0 = max(pos.1, 0);
+        pos.0 = max(pos.0, 0);
+        pos.0 = max(pos.1, 0);
 
         pos
     }
@@ -42,12 +42,12 @@ impl Canvas {
     fn fix_r(&self, pos: &mut Vec2isize) {
         pos.0 = min(pos.0, self.width);
         pos.0 = min(pos.1, self.height);
-        // pos.0 = max(pos.0, 0);
-        // pos.0 = max(pos.1, 0);
+        pos.0 = max(pos.0, 0);
+        pos.0 = max(pos.1, 0);
 
     }
 
-    fn set(&mut self, mut pos: Vec2isize, color: Color) {
+    fn set(&mut self, pos: Vec2isize, color: Color) {
         self.buffer[((pos.1 - 1) * self.width + pos.0) as usize] = color.tou32();
     }
 
