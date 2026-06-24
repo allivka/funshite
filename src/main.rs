@@ -180,6 +180,25 @@ impl Canvas {
         fill_half(&mv, &hv, &mh_coef);
 
     }
+
+    fn fill_polygon(&mut self, points: Vec<Vec2isize>, color: RGBA) {
+        match points.len() {
+            1 => {
+                self.set(points[0], color);
+                return
+            },
+            2 => {
+                self.draw_line(points[0], points[1], color);
+                return
+            },
+            _ => ()
+        }
+
+        for i in 1..points.len() - 1 {
+            self.fill_triangle(points[0], points[i], points[i + 1], color);
+        }
+    }
+
 }
 
 fn main() {
@@ -212,6 +231,9 @@ fn main() {
         canvas.fill_rect(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(0, 0, 255, 0));
         canvas.draw_line(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(255, 255, 255, 0));
         canvas.fill_triangle(Vec2isize(0, 300), Vec2isize(300, 300), Vec2isize(300, 450), RGBA(255, 0, 0, 0));
+
+        canvas.fill_polygon(vec!{Vec2isize(0, 0), Vec2isize(200, 200)}, RGBA(255, 0, 255, 0));
+        canvas.fill_polygon(vec!{Vec2isize(0, 300), Vec2isize(300, 300), Vec2isize(300, 450), Vec2isize(450, 1000)}, RGBA(255, 255, 0, 0));
 
         window.update_with_buffer(&canvas.buffer, WIDTH, HEIGHT).unwrap();
     }
