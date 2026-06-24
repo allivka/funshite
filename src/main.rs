@@ -8,12 +8,12 @@ const HEIGHT: usize = 1080;
 struct Vec2isize(isize, isize);
 
 #[derive(Copy, Clone)]
-struct LineCoefficient {
+struct LineCoefficients {
     k: f32,
     b: f32
 }
 
-impl LineCoefficient {
+impl LineCoefficients {
     fn new_from_line(start: Vec2isize, end: Vec2isize) -> Self {
         let dx = (end.0 - start.0) as f32;
         let dy = (end.1 - start.1) as f32;
@@ -27,10 +27,10 @@ impl LineCoefficient {
         let b = if dx == 0.0 {
             start.0 as f32
         } else {
-            start.0 as f32 - k * start.0 as f32
+            start.1 as f32 - k * start.0 as f32  // y = kx + b → b = y - kx
         };
 
-        LineCoefficient { k, b }
+        LineCoefficients { k, b }
     }
 }
 
@@ -66,7 +66,6 @@ impl Canvas {
             buffer: vec![0; width * height],
         }
     }
-
 
     fn fixed(&self, mut pos: Vec2isize) -> Vec2isize {
         pos.0 = min(pos.0, self.width);
@@ -114,7 +113,7 @@ impl Canvas {
         self.fix(&mut start);
         self.fix(&mut end);
 
-        let line = LineCoefficient::new_from_line(start, end);
+        let line = LineCoefficients::new_from_line(start, end);
 
         if line.k.is_infinite() {
             let y_start = min(start.1, end.1);
@@ -150,28 +149,35 @@ impl Canvas {
         if hv.1 < lv.1 { std::mem::swap(&mut hv, &mut lv); }
         if hv.1 < mv.1 { std::mem::swap(&mut hv, &mut mv); }
 
-        let lh_coef = LineCoefficient::new_from_line(lv, hv);
+        let lh_coef = LineCoefficients::new_from_line(lv, hv);
+        let lm_coef = LineCoefficients::new_from_line(lv, mv);
+        let mh_coef = LineCoefficients::new_from_line(mv, hv);
 
-        fn fill_half(this: &mut Canvas, low: Vec2isize, high: Vec2isize, lh_coef: LineCoefficient, color: RGBA) {
+        let mut fill_half = |low: &Vec2isize, high: &Vec2isize, coef: &LineCoefficients | {
+            let mut x1: f32;
+            let mut x2: f32;
 
-            let coef = LineCoefficient::new_from_line(high, low);
-            let mut y: isize;
-            let mut x_boundary: isize;
+            for y in min(low.1, high.1)..=max(low.1, high.1) {
+                x1 = if lh_coef.k.is_finite() {
+                    ((y as f32) - lh_coef.b) / lh_coef.k
+                } else {
+                    lv.0 as f32
+                };
 
-            for x in min(low.0, high.0)..=max(low.0, high.0) {
-                y = (x as f32 * coef.k + coef.b) as isize;
-                x_boundary = ((y as f32 - lh_coef.b) / lh_coef.k) as isize;
+                x2 = if coef.k.is_finite() {
+                    ((y as f32) - coef.b) / coef.k
+                } else {
+                    low.0 as f32
+                };
 
-                for i in min(x, x_boundary)..=max(x, x_boundary) {
-                    this.set(Vec2isize(i, y), color);
+                for x in min(x1 as isize, x2 as isize)..=max(x1 as isize, x2 as isize) {
+                    self.set(Vec2isize(x, y), color);
                 }
-
             }
-        }
+        };
 
-        fill_half(self, lv, mv, lh_coef, color);
-        fill_half(self, mv, hv, lh_coef, color);
-
+        fill_half(&lv, &mv, &lm_coef);
+        fill_half(&mv, &hv, &mh_coef);
 
     }
 }
@@ -201,13 +207,12 @@ fn main() {
 
     window.set_target_fps(60);
 
-    canvas.fill_rect(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(0, 0, 255, 0));
-    canvas.draw_line(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(255, 255, 255, 0));
-    canvas.fill_triangle(Vec2isize(0, 300), Vec2isize(300, 300), Vec2isize(300, 450), RGBA(255, 0, 0, 0));
-
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        window
-            .update_with_buffer(&canvas.buffer, WIDTH, HEIGHT)
-            .unwrap();
+
+        canvas.fill_rect(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(0, 0, 255, 0));
+        canvas.draw_line(Vec2isize(0, 0), Vec2isize(200, 200), RGBA(255, 255, 255, 0));
+        canvas.fill_triangle(Vec2isize(0, 300), Vec2isize(300, 300), Vec2isize(300, 450), RGBA(255, 0, 0, 0));
+
+        window.update_with_buffer(&canvas.buffer, WIDTH, HEIGHT).unwrap();
     }
 }
