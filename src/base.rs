@@ -3,6 +3,16 @@
 pub struct Vec2isize(pub isize, pub isize);
 
 #[derive(Copy, Clone)]
+pub struct Vec3d(pub f64, pub f64, pub f64);
+#[derive(Copy, Clone)]
+pub struct Vec2d(pub f64, pub f64);
+
+#[derive(Copy, Clone)]
+pub struct Vec3df32(pub f32, pub f32, pub f32);
+#[derive(Copy, Clone)]
+pub struct Vec2df32(pub f32, pub f32, pub f32);
+
+#[derive(Copy, Clone)]
 pub struct LineCoefficients {
     pub k: f32,
     pub b: f32

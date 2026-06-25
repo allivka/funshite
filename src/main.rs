@@ -1,10 +1,12 @@
 pub mod canvas;
 pub mod base;
+pub mod object;
 
 use minifb::{Key, Scale, ScaleMode, Window, WindowOptions};
-
+use std::path::Path;
 use base::{Vec2isize, RGBA};
 use canvas::Canvas;
+use object::Object;
 
 const WIDTH: usize = 1920;
 const HEIGHT: usize = 1080;
@@ -24,7 +26,7 @@ fn main() {
             resize: true,
             scale: Scale::X1,
             scale_mode: ScaleMode::Center,
-            topmost: true,
+            topmost: false,
             transparency: false,
             none: false,
 
@@ -35,6 +37,14 @@ fn main() {
     });
 
     window.set_target_fps(60);
+
+    let objects = match object::parse_file(Path::new("test.obj")) {
+        Ok(objects) => {
+            println!("Successfully parsed obj file");
+            objects
+        },
+        Err(e) => {panic!("Failed parsing obj file:\t{}", e);}
+    };
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
@@ -47,4 +57,6 @@ fn main() {
 
         window.update_with_buffer(&canvas.buffer, WIDTH, HEIGHT).unwrap();
     }
+
+
 }
