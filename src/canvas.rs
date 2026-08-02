@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
-
-use crate::base::{Vec2isize, RGBA, LineCoefficients};
+use crate::base;
+use crate::base::{Vec2isize, RGBA, LineCoefficients, Vec2d};
 
 pub struct Canvas {
     pub width: isize,
@@ -59,29 +59,42 @@ impl Canvas {
         self.buffer[(max(pos.1 - 1, 0) * self.width + pos.0) as usize] = color.to_argb_u32();
     }
 
-    pub fn draw_line(&mut self, mut start: Vec2isize, mut end: Vec2isize, color: RGBA) {
-        self.fix(&mut start);
-        self.fix(&mut end);
+    pub fn draw_line(&mut self, start: Vec2isize, end: Vec2isize, color: RGBA) {
 
-        let line = LineCoefficients::new_from_line(start, end);
 
-        if line.k.is_infinite() {
-            let y_start = min(start.1, end.1);
-            let y_end = max(start.1, end.1);
-            for y in y_start..=y_end {
-                self.set(Vec2isize(start.0, y), color);
+        let dx = (end.0 - start.0).abs();
+        let dy = (end.1 - start.1).abs();
+
+        let sx = if start.0 < end.0 { 1 } else { -1 };
+        let sy = if start.1 < end.1 { 1 } else { -1 };
+
+        let mut err = dy - dx;
+        let mut e2: isize;
+
+        let mut y: isize = 0;
+        let mut x: isize = 0;
+
+        loop {
+            self.set(Vec2isize(x + start.0, y + start.1), color);
+
+            if x == dx * sx && y == dy * sy { break; }
+
+            e2 = 2 * err;
+
+            if e2 > dx {
+                y += sy;
+                err -= dx;
             }
-            return;
+
+            if e2 < dy {
+                x += sx;
+                err += dy;
+            }
+
         }
 
-        let x_start = min(start.0, end.0);
-        let x_end = max(start.0, end.0);
-
-        for x in x_start..=x_end {
-            let y = (line.k * x as f32 + line.b) as isize;
-            self.set(Vec2isize(x, y), color);
-        }
     }
+
 
     pub fn fill_rect(&mut self, mut start: Vec2isize, mut end: Vec2isize, color: RGBA) {
         self.fix(&mut start);
