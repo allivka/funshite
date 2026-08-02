@@ -1,6 +1,5 @@
 use std::cmp::{max, min};
-use crate::base;
-use crate::base::{Vec2isize, RGBA, LineCoefficients, Vec2d};
+use crate::base::{Vec2i, RGBA, LineCoefficients};
 
 pub struct Canvas {
     pub width: isize,
@@ -17,7 +16,7 @@ impl Canvas {
         }
     }
 
-    pub fn fixed(&self, mut pos: Vec2isize) -> Vec2isize {
+    pub fn fixed(&self, mut pos: Vec2i) -> Vec2i {
         pos.0 = min(pos.0, self.width);
         pos.0 = min(pos.1, self.height);
         pos.0 = max(pos.0, 0);
@@ -26,40 +25,40 @@ impl Canvas {
         pos
     }
 
-    pub fn fix(&self, pos: &mut Vec2isize) {
+    pub fn fix(&self, pos: &mut Vec2i) {
         pos.0 = min(pos.0, self.width);
         pos.0 = min(pos.1, self.height);
         pos.0 = max(pos.0, 0);
         pos.0 = max(pos.1, 0);
     }
 
-    pub fn check(&self, pos: Vec2isize) -> bool {
+    pub fn check(&self, pos: Vec2i) -> bool {
         pos.0 >= 0 && pos.0 < self.width && pos.1 >= 0 && pos.1 < self.height
     }
 
-    pub fn idx(pos: Vec2isize, canvas_size: Vec2isize) -> usize {
+    pub fn idx(pos: Vec2i, canvas_size: Vec2i) -> usize {
         min(max(pos.1 - 1, 0) * canvas_size.0 + pos.0, canvas_size.0 * canvas_size.1 - 1) as usize
     }
 
-    pub fn idx_of(&self, pos: Vec2isize) -> usize {
+    pub fn idx_of(&self, pos: Vec2i) -> usize {
         min(max(pos.1 - 1, 0) * self.width + pos.0, self.width * self.height - 1) as usize
     }
 
-    pub fn set(&mut self, pos: Vec2isize, color: RGBA) {
+    pub fn set(&mut self, pos: Vec2i, color: RGBA) {
         if !self.check(pos) { return; }
-        self.buffer[Self::idx(pos, Vec2isize(self.width, self.height))] = color.to_argb_u32();
+        self.buffer[Self::idx(pos, Vec2i(self.width, self.height))] = color.to_argb_u32();
     }
 
-    pub fn get(&self, pos: Vec2isize) -> RGBA {
+    pub fn get(&self, pos: Vec2i) -> RGBA {
         RGBA::from_argb_u32(self.buffer[self.idx_of(pos)])
     }
 
-    pub fn set_fixed(&mut self, mut pos: Vec2isize, color: RGBA) {
+    pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
         self.buffer[(max(pos.1 - 1, 0) * self.width + pos.0) as usize] = color.to_argb_u32();
     }
 
-    pub fn draw_line(&mut self, start: Vec2isize, end: Vec2isize, color: RGBA) {
+    pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
 
 
         let dx = (end.0 - start.0).abs();
@@ -75,7 +74,7 @@ impl Canvas {
         let mut x: isize = 0;
 
         loop {
-            self.set(Vec2isize(x + start.0, y + start.1), color);
+            self.set(Vec2i(x + start.0, y + start.1), color);
 
             if x == dx * sx && y == dy * sy { break; }
 
@@ -95,18 +94,18 @@ impl Canvas {
 
     }
 
-    pub fn fill_rect(&mut self, mut start: Vec2isize, mut end: Vec2isize, color: RGBA) {
+    pub fn fill_rect(&mut self, mut start: Vec2i, mut end: Vec2i, color: RGBA) {
         self.fix(&mut start);
         self.fix(&mut end);
 
         for y in min(start.1, end.1)..=max(start.1, end.1) {
             for x in min(start.0, end.0)..=max(start.0, end.0) {
-                self.set(Vec2isize(x, y), color);
+                self.set(Vec2i(x, y), color);
             }
         }
     }
 
-    pub fn fill_triangle(&mut self, mut lv: Vec2isize, mut mv: Vec2isize, mut hv: Vec2isize, color: RGBA) {
+    pub fn fill_triangle(&mut self, mut lv: Vec2i, mut mv: Vec2i, mut hv: Vec2i, color: RGBA) {
         if mv.1 < lv.1 { std::mem::swap(&mut mv, &mut lv); }
         if hv.1 < lv.1 { std::mem::swap(&mut hv, &mut lv); }
         if hv.1 < mv.1 { std::mem::swap(&mut hv, &mut mv); }
@@ -115,7 +114,7 @@ impl Canvas {
         let lm_coef = LineCoefficients::new_from_line(lv, mv);
         let mh_coef = LineCoefficients::new_from_line(mv, hv);
 
-        let mut fill_half = |low: &Vec2isize, high: &Vec2isize, coef: &LineCoefficients | {
+        let mut fill_half = |low: &Vec2i, high: &Vec2i, coef: &LineCoefficients | {
             let mut x1: f32;
             let mut x2: f32;
 
@@ -133,7 +132,7 @@ impl Canvas {
                 };
 
                 for x in min(x1 as isize, x2 as isize)..=max(x1 as isize, x2 as isize) {
-                    self.set(Vec2isize(x, y), color);
+                    self.set(Vec2i(x, y), color);
                 }
             }
         };
@@ -143,7 +142,7 @@ impl Canvas {
 
     }
 
-    pub fn fill_polygon(&mut self, points: Vec<Vec2isize>, color: RGBA) {
+    pub fn fill_polygon(&mut self, points: Vec<Vec2i>, color: RGBA) {
         match points.len() {
             1 => {
                 self.set(points[0], color);

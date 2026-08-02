@@ -1,16 +1,58 @@
 
 #[derive(Copy, Clone)]
-pub struct Vec2isize(pub isize, pub isize);
+pub struct Vec2i(pub isize, pub isize);
 
-#[derive(Copy, Clone)]
-pub struct Vec3d(pub f64, pub f64, pub f64);
 #[derive(Copy, Clone)]
 pub struct Vec2d(pub f64, pub f64);
 
+pub enum RotationMatrixKind {
+    X(f64),
+    Y(f64),
+    Z(f64)
+}
+
 #[derive(Copy, Clone)]
-pub struct Vec3df32(pub f32, pub f32, pub f32);
-#[derive(Copy, Clone)]
-pub struct Vec2df32(pub f32, pub f32, pub f32);
+pub struct Vec3d(pub f64, pub f64, pub f64);
+
+pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
+    match kind {
+        RotationMatrixKind::X(a) => {
+
+            let s = a.sin();
+            let c = a.cos();
+
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, c, -s],
+                [0.0, s, c],
+            ]
+        },
+
+        RotationMatrixKind::Y(a) => {
+
+            let s = a.sin();
+            let c = a.cos();
+
+            [
+                [c, 0.0, s],
+                [0.0, 1.0, 0.0],
+                [-s, 0.0, c],
+            ]
+        },
+
+        RotationMatrixKind::Z(a) => {
+
+            let s = a.sin();
+            let c = a.cos();
+
+            [
+                [c, -s, 0.0],
+                [s, c, 0.0],
+                [0.0, 0.0, 1.0],
+            ]
+        },
+    }
+}
 
 #[derive(Copy, Clone)]
 pub struct LineCoefficients {
@@ -19,7 +61,7 @@ pub struct LineCoefficients {
 }
 
 impl LineCoefficients {
-    pub fn new_from_line(start: Vec2isize, end: Vec2isize) -> Self {
+    pub fn new_from_line(start: Vec2i, end: Vec2i) -> Self {
         let dx = (end.0 - start.0) as f32;
         let dy = (end.1 - start.1) as f32;
 
