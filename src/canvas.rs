@@ -95,7 +95,6 @@ impl Canvas {
 
     }
 
-
     pub fn fill_rect(&mut self, mut start: Vec2isize, mut end: Vec2isize, color: RGBA) {
         self.fix(&mut start);
         self.fix(&mut end);
