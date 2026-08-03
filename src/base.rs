@@ -5,14 +5,26 @@ pub struct Vec2i(pub isize, pub isize);
 #[derive(Copy, Clone)]
 pub struct Vec2d(pub f64, pub f64);
 
+
+#[derive(Copy, Clone)]
+pub struct Vec3d(pub f64, pub f64, pub f64);
+
+pub const I3X3: [[f64; 3]; 3] = [
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0],
+];
+
+pub const ZERO3X3: [[f64; 3]; 3] = [
+    [0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0],
+];
 pub enum RotationMatrixKind {
     X(f64),
     Y(f64),
     Z(f64)
 }
-
-#[derive(Copy, Clone)]
-pub struct Vec3d(pub f64, pub f64, pub f64);
 
 pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
     match kind {
@@ -52,6 +64,20 @@ pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
             ]
         },
     }
+}
+
+pub fn multiply_matrix_3x3(base: &[[f64; 3]; 3], factor: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
+    let mut t: [[f64; 3]; 3] = ZERO3X3;
+
+    for i in 0..3 {
+        for j in 0..3 {
+            for k in 0..3 {
+                t[i][j] += base[i][k] * factor[k][j];
+            }
+        }
+    }
+
+    t
 }
 
 #[derive(Copy, Clone)]
