@@ -19,11 +19,18 @@ pub fn process_linear_motion(config: &Settings, camera: &mut Viewer, motion: &Mo
 }
 
 pub fn process_rotation(config: &Settings, camera: &mut Viewer, motion: &Motion) {
-    let axis_index = match motion.axis {
+    let mut axis_index = match motion.axis {
         Axis::X(_) => 0,
         Axis::Y(_) => 1,
         Axis::Z(_) => 2,
     };
+
+    let (Axis::X(speed) | Axis::Y(speed) | Axis::Z(speed)) = motion.axis;
+    
+    if speed < 0.0 {
+        axis_index += 3;
+    }
+    
     camera.rel_rotate(config.rotation_matrices[axis_index]);
 }
 

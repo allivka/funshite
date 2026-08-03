@@ -10,7 +10,7 @@ const DEFAULT_ROTATION_SPEED: f64 = PI / 90.0;
 pub struct Settings {
     pub keys: HashMap<Key, Motion>,
     pub speed_factor: f64,
-    pub rotation_matrices: [[[f64; 3]; 3]; 3],
+    pub rotation_matrices: [[[f64; 3]; 3]; 6],
 }
 
 impl Settings {
@@ -20,6 +20,10 @@ impl Settings {
             base::new_vec3d_rotation_matrix(Axis::X(DEFAULT_ROTATION_SPEED * self.speed_factor)),
             base::new_vec3d_rotation_matrix(Axis::Y(DEFAULT_ROTATION_SPEED * self.speed_factor)),
             base::new_vec3d_rotation_matrix(Axis::Z(DEFAULT_ROTATION_SPEED * self.speed_factor)),
+
+            base::new_vec3d_rotation_matrix(Axis::X(-DEFAULT_ROTATION_SPEED * self.speed_factor)),
+            base::new_vec3d_rotation_matrix(Axis::Y(-DEFAULT_ROTATION_SPEED * self.speed_factor)),
+            base::new_vec3d_rotation_matrix(Axis::Z(-DEFAULT_ROTATION_SPEED * self.speed_factor)),
         ];
     }
 
@@ -27,7 +31,7 @@ impl Settings {
         Settings {
             keys: HashMap::new(),
             speed_factor: 1.0,
-            rotation_matrices: [base::I3X3; 3],
+            rotation_matrices: [base::I3X3; 6],
         }
     }
 
