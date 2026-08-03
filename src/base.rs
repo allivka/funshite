@@ -126,3 +126,26 @@ impl RGBA {
     }
 
 }
+
+pub enum MotionKind {
+    Rotation(f64),
+    Linear(f64),
+}
+
+pub enum DirectionKind {
+    Straight,
+    Vertical,
+    Horizontal,
+}
+
+pub enum Axis {
+    X,
+    Y,
+    Z
+}
+
+pub struct Motion {
+    pub kind: MotionKind,
+    pub direction: DirectionKind,
+    pub axis: Axis,
+}

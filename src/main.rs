@@ -2,6 +2,8 @@ pub mod canvas;
 pub mod base;
 pub mod object;
 pub mod viewer;
+pub mod settings;
+
 
 use minifb::{Key, Scale, ScaleMode, Window, WindowOptions};
 use std::path::Path;
