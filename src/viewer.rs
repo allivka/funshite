@@ -15,7 +15,7 @@ impl Viewer {
     }
 
     pub fn rel_rotate(&mut self, rotation: [[f64; 3]; 3]) {
-        self.rotation = base::multiply_matrix_3x3(&self.rotation, &rotation);
+        self.rotation = base::multiply_matrix3x3(&self.rotation, &rotation);
     }
 
     pub fn rel_move(&mut self, shift: Vec3d) {

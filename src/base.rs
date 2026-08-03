@@ -60,7 +60,7 @@ pub fn new_vec3d_rotation_matrix(axis: Axis) -> [[f64; 3]; 3] {
     }
 }
 
-pub fn multiply_matrix_3x3(base: &[[f64; 3]; 3], factor: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
+pub fn multiply_matrix3x3(base: &[[f64; 3]; 3], factor: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
     let mut t: [[f64; 3]; 3] = ZERO3X3;
 
     for i in 0..3 {
@@ -72,6 +72,14 @@ pub fn multiply_matrix_3x3(base: &[[f64; 3]; 3], factor: &[[f64; 3]; 3]) -> [[f6
     }
 
     t
+}
+
+pub fn multiply_vector3d_by_matrix3x3(v: Vec3d, r: &[[f64; 3]; 3]) -> Vec3d {
+    Vec3d(
+        r[0][0] * v.0 + r[0][1] * v.1 + r[0][2] * v.2,
+        r[1][0] * v.0 + r[1][1] * v.1 + r[1][2] * v.2,
+        r[2][0] * v.0 + r[2][1] * v.1 + r[2][2] * v.2,
+    )
 }
 
 #[derive(Copy, Clone)]

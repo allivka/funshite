@@ -37,11 +37,11 @@ impl Canvas {
     }
 
     pub fn idx(pos: Vec2i, canvas_size: Vec2i) -> usize {
-        min(max(pos.1, 0) * canvas_size.0 + pos.0, canvas_size.0 * canvas_size.1 - 1) as usize
+        min(max(pos.1, 0) * canvas_size.0 + max(pos.0, 0), canvas_size.0 * canvas_size.1 - 1) as usize
     }
 
     pub fn idx_of(&self, pos: Vec2i) -> usize {
-        min(max(pos.1, 0) * self.width + pos.0, self.width * self.height - 1) as usize
+        min(max(pos.1, 0) * self.width + max(pos.0, 0), self.width * self.height - 1) as usize
     }
 
     pub fn set(&mut self, pos: Vec2i, color: RGBA) {
