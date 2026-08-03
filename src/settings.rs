@@ -17,9 +17,9 @@ impl Settings {
 
     pub fn generate_rotation_matrices(&mut self) {
         self.rotation_matrices = [
-            base::new_vec3d_rotation_matrix(base::RotationMatrixKind::X(DEFAULT_ROTATION_SPEED * self.speed_factor)),
-            base::new_vec3d_rotation_matrix(base::RotationMatrixKind::Y(DEFAULT_ROTATION_SPEED * self.speed_factor)),
-            base::new_vec3d_rotation_matrix(base::RotationMatrixKind::Z(DEFAULT_ROTATION_SPEED * self.speed_factor)),
+            base::new_vec3d_rotation_matrix(Axis::X(DEFAULT_ROTATION_SPEED * self.speed_factor)),
+            base::new_vec3d_rotation_matrix(Axis::Y(DEFAULT_ROTATION_SPEED * self.speed_factor)),
+            base::new_vec3d_rotation_matrix(Axis::Z(DEFAULT_ROTATION_SPEED * self.speed_factor)),
         ];
     }
 
@@ -37,67 +37,67 @@ impl Settings {
         //surface linear movement keys - WASD
 
         self.keys.insert(Key::W, Motion {
-            kind: MotionKind::Linear(-DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Straight,
-            axis: Axis::Z,
+            axis: Axis::Z(-DEFAULT_LINEAR_SPEED),
         });
 
         self.keys.insert(Key::S, Motion {
-            kind: MotionKind::Linear(DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Straight,
-            axis: Axis::Z,
+            axis: Axis::Z(DEFAULT_LINEAR_SPEED),
         });
 
         self.keys.insert(Key::D, Motion {
-            kind: MotionKind::Linear(DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Horizontal,
-            axis: Axis::X,
+            axis: Axis::X(DEFAULT_LINEAR_SPEED),
         });
 
         self.keys.insert(Key::A, Motion {
-            kind: MotionKind::Linear(-DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Horizontal,
-            axis: Axis::X,
+            axis: Axis::X(-DEFAULT_LINEAR_SPEED),
         });
 
         //vertical movement keys - Space, LeftCtrl
 
         self.keys.insert(Key::Space, Motion {
-            kind: MotionKind::Linear(DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y,
+            axis: Axis::Y(DEFAULT_LINEAR_SPEED),
         });
 
         self.keys.insert(Key::LeftCtrl, Motion {
-            kind: MotionKind::Linear(-DEFAULT_LINEAR_SPEED),
+            kind: MotionKind::Linear,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y,
+            axis: Axis::Y(-DEFAULT_LINEAR_SPEED),
         });
 
         //Rotation keys - Left, Right, Up, Down keys
 
         self.keys.insert(Key::Up, Motion {
-            kind: MotionKind::Rotation(DEFAULT_ROTATION_SPEED),
+            kind: MotionKind::Rotation,
             direction: DirectionKind::Horizontal,
-            axis: Axis::X,
+            axis: Axis::X(DEFAULT_ROTATION_SPEED),
         });
 
         self.keys.insert(Key::Down, Motion {
-            kind: MotionKind::Rotation(-DEFAULT_ROTATION_SPEED),
+            kind: MotionKind::Rotation,
             direction: DirectionKind::Horizontal,
-            axis: Axis::X,
+            axis: Axis::X(-DEFAULT_ROTATION_SPEED),
         });
 
         self.keys.insert(Key::Right, Motion {
-            kind: MotionKind::Rotation(DEFAULT_ROTATION_SPEED),
+            kind: MotionKind::Rotation,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y,
+            axis: Axis::Y(DEFAULT_ROTATION_SPEED),
         });
 
         self.keys.insert(Key::Left, Motion {
-            kind: MotionKind::Rotation(-DEFAULT_ROTATION_SPEED),
+            kind: MotionKind::Rotation,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y,
+            axis: Axis::Y(-DEFAULT_ROTATION_SPEED),
         });
 
 

@@ -20,15 +20,9 @@ pub const ZERO3X3: [[f64; 3]; 3] = [
     [0.0, 0.0, 0.0],
     [0.0, 0.0, 0.0],
 ];
-pub enum RotationMatrixKind {
-    X(f64),
-    Y(f64),
-    Z(f64)
-}
-
-pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
-    match kind {
-        RotationMatrixKind::X(a) => {
+pub fn new_vec3d_rotation_matrix(axis: Axis) -> [[f64; 3]; 3] {
+    match axis {
+        Axis::X(a) => {
 
             let s = a.sin();
             let c = a.cos();
@@ -40,7 +34,7 @@ pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
             ]
         },
 
-        RotationMatrixKind::Y(a) => {
+        Axis::Y(a) => {
 
             let s = a.sin();
             let c = a.cos();
@@ -52,7 +46,7 @@ pub fn new_vec3d_rotation_matrix(kind: RotationMatrixKind) -> [[f64; 3]; 3] {
             ]
         },
 
-        RotationMatrixKind::Z(a) => {
+        Axis::Z(a) => {
 
             let s = a.sin();
             let c = a.cos();
@@ -133,8 +127,8 @@ impl RGBA {
 }
 
 pub enum MotionKind {
-    Rotation(f64),
-    Linear(f64),
+    Rotation,
+    Linear,
 }
 
 pub enum DirectionKind {
@@ -144,9 +138,9 @@ pub enum DirectionKind {
 }
 
 pub enum Axis {
-    X,
-    Y,
-    Z
+    X(f64),
+    Y(f64),
+    Z(f64),
 }
 
 pub struct Motion {
