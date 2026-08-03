@@ -17,7 +17,7 @@ pub const I3X3: [[f64; 3]; 3] = [
 
 pub const ZERO3X3: [[f64; 3]; 3] = [
     [0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0],
     [0.0, 0.0, 0.0],
 ];
 pub enum RotationMatrixKind {
@@ -108,21 +108,26 @@ impl LineCoefficients {
 }
 
 #[derive(Copy, Clone)]
-pub struct RGBA(pub u8, pub u8, pub u8, pub u8);
+pub struct RGBA {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
+}
 
 impl RGBA {
 
     pub fn from_argb_u32(n: u32) -> RGBA {
-        RGBA(
-            (0b1111_1111 & (n >> 16)) as u8,
-            (0b1111_1111 & (n >> 8)) as u8,
-            (0b1111_1111 & (n >> 0)) as u8,
-            (0b1111_1111 & (n >> 24)) as u8
-        )
+        RGBA {
+            r: (0b1111_1111 & (n >> 16)) as u8,
+            g: (0b1111_1111 & (n >> 8)) as u8,
+            b: (0b1111_1111 & (n >> 0)) as u8,
+            a: (0b1111_1111 & (n >> 24)) as u8,
+        }
     }
 
     pub fn to_argb_u32(&self) -> u32 {
-        (self.3 as u32) << 24 | (self.0 as u32) << 16 | (self.1 as u32) << 8 | (self.2 as u32)
+        (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | (self.b as u32)
     }
 
 }

@@ -98,7 +98,7 @@ pub fn parse_file(path: &Path) -> Result<Vec<Object>, std::io::Error> {
             Err(e) => { return Err(e) }
         };
         
-        if line == "" {
+        if line.is_empty() {
             continue;
         }
 

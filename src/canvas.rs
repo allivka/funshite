@@ -18,18 +18,18 @@ impl Canvas {
 
     pub fn fixed(&self, mut pos: Vec2i) -> Vec2i {
         pos.0 = min(pos.0, self.width);
-        pos.0 = min(pos.1, self.height);
+        pos.1 = min(pos.1, self.height);
         pos.0 = max(pos.0, 0);
-        pos.0 = max(pos.1, 0);
+        pos.1 = max(pos.1, 0);
 
         pos
     }
 
     pub fn fix(&self, pos: &mut Vec2i) {
         pos.0 = min(pos.0, self.width);
-        pos.0 = min(pos.1, self.height);
+        pos.1 = min(pos.1, self.height);
         pos.0 = max(pos.0, 0);
-        pos.0 = max(pos.1, 0);
+        pos.1 = max(pos.1, 0);
     }
 
     pub fn check(&self, pos: Vec2i) -> bool {
@@ -37,11 +37,11 @@ impl Canvas {
     }
 
     pub fn idx(pos: Vec2i, canvas_size: Vec2i) -> usize {
-        min(max(pos.1 - 1, 0) * canvas_size.0 + pos.0, canvas_size.0 * canvas_size.1 - 1) as usize
+        min(max(pos.1, 0) * canvas_size.0 + pos.0, canvas_size.0 * canvas_size.1 - 1) as usize
     }
 
     pub fn idx_of(&self, pos: Vec2i) -> usize {
-        min(max(pos.1 - 1, 0) * self.width + pos.0, self.width * self.height - 1) as usize
+        min(max(pos.1, 0) * self.width + pos.0, self.width * self.height - 1) as usize
     }
 
     pub fn set(&mut self, pos: Vec2i, color: RGBA) {
@@ -55,7 +55,7 @@ impl Canvas {
 
     pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
-        self.buffer[(max(pos.1 - 1, 0) * self.width + pos.0) as usize] = color.to_argb_u32();
+        self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize] = color.to_argb_u32();
     }
 
     pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {

@@ -52,12 +52,12 @@ fn main() {
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
-        canvas.fill_rect(Vec2i(0, 0), Vec2i(200, 200), RGBA(0, 0, 255, 0));
-        canvas.draw_line(Vec2i(0, 0), Vec2i(200, 200), RGBA(255, 255, 255, 0));
-        canvas.fill_triangle(Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), RGBA(255, 0, 0, 0));
+        canvas.fill_rect(Vec2i(0, 0), Vec2i(200, 200), RGBA { r: 0, g: 0, b: 255, a: 0 });
+        canvas.draw_line(Vec2i(0, 0), Vec2i(200, 200), RGBA { r: 255, g: 255, b: 255, a: 0 });
+        canvas.fill_triangle(Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), RGBA { r: 255, g: 0, b: 0, a: 0 });
 
-        canvas.fill_polygon(vec!{Vec2i(0, 0), Vec2i(200, 200)}, RGBA(255, 0, 255, 0));
-        canvas.fill_polygon(vec!{Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), Vec2i(450, 1000)}, RGBA(255, 255, 0, 0));
+        canvas.fill_polygon(vec!{Vec2i(0, 0), Vec2i(200, 200)}, RGBA { r: 255, g: 0, b: 255, a: 0 });
+        canvas.fill_polygon(vec!{Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), Vec2i(450, 1000)}, RGBA { r: 255, g: 255, b: 0, a: 0 });
 
         window.update_with_buffer(&canvas.buffer, WIDTH, HEIGHT).unwrap();
     }
