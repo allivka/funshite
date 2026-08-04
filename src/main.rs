@@ -4,6 +4,7 @@ pub mod object;
 pub mod viewer;
 pub mod settings;
 pub mod controller;
+pub mod renderer;
 
 
 use minifb::{Key, Scale, ScaleMode, Window, WindowOptions};
