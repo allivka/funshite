@@ -82,6 +82,14 @@ pub fn multiply_vector3d_by_matrix3x3(v: Vec3d, r: &[[f64; 3]; 3]) -> Vec3d {
     )
 }
 
+pub fn transpose_matrix3x3(m: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
+    [
+        [m[0][0], m[1][0], m[2][0]],
+        [m[0][1], m[1][1], m[2][1]],
+        [m[0][2], m[1][2], m[2][2]],
+    ]
+}
+
 #[derive(Copy, Clone)]
 pub struct LineCoefficients {
     pub k: f32,

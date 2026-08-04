@@ -14,7 +14,7 @@ impl Viewer {
         }
     }
 
-    pub fn rel_rotate(&mut self, rotation: [[f64; 3]; 3]) {
+    pub fn rel_rotate(&mut self, rotation: &[[f64; 3]; 3]) {
         self.rotation = base::multiply_matrix3x3(&self.rotation, &rotation);
     }
 
