@@ -135,7 +135,16 @@ impl RGBA {
             a: (0b1111_1111 & (n >> 24)) as u8,
         }
     }
-    
+
+    pub fn new() -> RGBA {
+        RGBA {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
+    }
+
     pub fn r(n: u8) -> RGBA {
         RGBA {
             r: n,

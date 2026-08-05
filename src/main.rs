@@ -9,7 +9,7 @@ pub mod renderer;
 
 use minifb::{Key, MouseButton, MouseMode, Scale, ScaleMode, Window, WindowOptions};
 use std::path::Path;
-use base::{Vec2i, RGBA};
+use base::{RGBA};
 use canvas::Canvas;
 use crate::base::Vec3d;
 use crate::renderer::Renderer;
@@ -105,9 +105,9 @@ fn main() {
 
         controller::process_controls(&mut config, &mut camera, &keys);
 
-        canvas.clear_buffer();
+        canvas.clear(RGBA::new());
         renderer.render(&mut canvas, &camera);
-        window.update_with_buffer(&canvas.buffer, canvas.width as usize, canvas.height as usize).unwrap();
+        window.update_with_buffer(canvas.unsafe_slice(), canvas.width as usize, canvas.height as usize).unwrap();
     }
 
 

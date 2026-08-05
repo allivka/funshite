@@ -1,24 +1,47 @@
 use std::cmp::{max, min};
+use std::sync::atomic::{AtomicU32, Ordering};
 use crate::base::{Vec2i, RGBA};
+use std::slice;
 
 pub struct Canvas {
     pub width: isize,
     pub height: isize,
-    pub buffer: Vec<u32>,
+    pub buffer: Vec<AtomicU32>,
 }
 
 impl Canvas {
     pub fn new(width: usize, height: usize) -> Canvas {
 
+        let mut buffer = Vec::with_capacity(width * height);
+
+        for _ in 0..width * height {
+            buffer.push(AtomicU32::new(0));
+        }
+
         Canvas {
             width: width as isize,
             height: height as isize,
-            buffer: vec![0; width * height],
+            buffer,
         }
     }
 
-    pub fn clear_buffer(&mut self) {
-        self.buffer = vec![0; self.width as usize * self.height as usize];
+    pub fn unsafe_slice(&self) -> &[u32] {
+        unsafe {
+            slice::from_raw_parts(
+                self.buffer.as_ptr() as *const u32,
+                self.buffer.len(),
+            )
+        }
+    }
+
+    pub fn clear(&mut self, color: RGBA) {
+        let raw_slice: &mut [u32] = unsafe {
+            slice::from_raw_parts_mut(
+                self.buffer.as_mut_ptr() as *mut u32,
+                self.buffer.len(),
+            )
+        };
+        raw_slice.fill(color.to_argb_u32());
     }
 
     pub fn translate_centered_to_standard(&self, pos: Vec2i) -> Vec2i {
@@ -58,16 +81,16 @@ impl Canvas {
 
     pub fn set(&mut self, pos: Vec2i, color: RGBA) {
         if !self.check(pos) { return; }
-        self.buffer[Self::idx(pos, Vec2i(self.width, self.height))] = color.to_argb_u32();
+        self.buffer[Self::idx(pos, Vec2i(self.width, self.height))].store(color.to_argb_u32(), Ordering::Relaxed);
     }
 
     pub fn get(&self, pos: Vec2i) -> RGBA {
-        RGBA::from_argb_u32(self.buffer[self.idx_of(pos)])
+        RGBA::from_argb_u32(self.buffer[self.idx_of(pos)].load(Ordering::Relaxed))
     }
 
     pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
-        self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize] = color.to_argb_u32();
+        self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize].store(color.to_argb_u32(), Ordering::Relaxed);
     }
 
     pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
@@ -184,7 +207,6 @@ impl Canvas {
         if hv.1 < lv.1 { std::mem::swap(&mut hv, &mut lv); }
         if hv.1 < mv.1 { std::mem::swap(&mut hv, &mut mv); }
 
-        let color_u32 = color.to_argb_u32();
 
         let get_x = |y: isize, p1: Vec2i, p2: Vec2i| -> isize {
             let dy = p2.1 - p1.1;
@@ -196,7 +218,7 @@ impl Canvas {
             p1.0 + (y - p1.1) * (p2.0 - p1.0) / dy
         };
 
-        let mut fill_half = |low: Vec2i, high: Vec2i| {
+        let fill_half = |low: Vec2i, high: Vec2i| {
             if low.1 == high.1 {
                 return;
             }
@@ -215,7 +237,7 @@ impl Canvas {
                     let row = (y * self.width) as usize;
                     let start_idx = row + start_x as usize;
                     let end_idx = row + end_x as usize;
-                    self.buffer[start_idx..=end_idx].fill(color_u32);
+                    self.buffer[start_idx..=end_idx].iter().for_each(|v| v.store(color.to_argb_u32(), Ordering::Relaxed));
                 }
             }
         };
