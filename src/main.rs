@@ -13,11 +13,24 @@ use base::{RGBA};
 use canvas::Canvas;
 use crate::base::Vec3d;
 use crate::renderer::Renderer;
+use std::env;
 
 const WIDTH: usize = 1920;
 const HEIGHT: usize = 1080;
 
 fn main() {
+
+    let args: Vec<String> = env::args().collect();
+
+    let file_path: &str;
+
+    if args.len() < 2 {
+        println!("Not specified a path to .obj file with a 3d model. Will attempt to open default file test.obj\n");
+        file_path = "test.obj";
+    } else {
+        file_path = args[1].as_str();
+    }
+
     let mut canvas = Canvas::new(WIDTH, HEIGHT);
 
     let mut window = Window::new(
@@ -45,7 +58,7 @@ fn main() {
 
     let mut camera = viewer::Viewer::new(Vec3d(0.0, 0.0, 0.0));
 
-    let objects = match object::parse_file(Path::new("test.obj")) {
+    let objects = match object::parse_file(Path::new(file_path)) {
         Ok(objects) => objects,
         Err(e) => {
             panic!("Failed parsing obj file:\t{}", e);
