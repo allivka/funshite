@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::fmt;
 use crate::base::{Vec2i, RGBA, LineCoefficients};
 
 pub struct Canvas {
@@ -9,11 +10,23 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(width: usize, height: usize) -> Canvas {
+        
         Canvas {
             width: width as isize,
             height: height as isize,
             buffer: vec![0; width * height],
         }
+    }
+    
+    pub fn clear_buffer(&mut self) {
+        self.buffer = vec![0; self.width as usize * self.height as usize];
+    }
+    
+    pub fn translate_centered_to_standard(&self, pos: Vec2i) -> Vec2i {
+        Vec2i(
+            pos.0 + self.width / 2,
+            self.height - (pos.1 + self.height / 2),
+        )
     }
 
     pub fn fixed(&self, mut pos: Vec2i) -> Vec2i {
@@ -124,7 +137,7 @@ impl Canvas {
         self.draw_line_thick( Vec2i(pos.0, pos.1 + size.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
     }
 
-    pub fn draw_polygon(&mut self, points: Vec<Vec2i>,  color: RGBA, thickness: isize) {
+    pub fn draw_polygon(&mut self, points: &Vec<Vec2i>,  color: RGBA, thickness: isize) {
         if points.is_empty() {
             return;
         }
@@ -153,6 +166,8 @@ impl Canvas {
         for i in 0..points.len() - 1 {
             self.draw_line_thick(points[i], points[i + 1], color, thickness);
         }
+        
+        self.draw_line_thick(points[0], points[points.len() - 1], color, thickness);
 
     }
 

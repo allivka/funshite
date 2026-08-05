@@ -4,6 +4,8 @@ use std::path::Path;
 
 use crate::base::{Vec2d, Vec3d};
 
+
+// 0 - vertex, 1 - texture, 2 - normal
 #[derive(Copy, Clone)]
 pub struct VertexProps(pub isize, pub isize, pub isize);
 

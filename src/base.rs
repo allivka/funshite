@@ -135,6 +135,42 @@ impl RGBA {
             a: (0b1111_1111 & (n >> 24)) as u8,
         }
     }
+    
+    pub fn r(n: u8) -> RGBA {
+        RGBA {
+            r: n,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
+    }
+
+    pub fn g(n: u8) -> RGBA {
+        RGBA {
+            r: 0,
+            g: n,
+            b: 0,
+            a: 0,
+        }
+    }
+
+    pub fn b(n: u8) -> RGBA {
+        RGBA {
+            r: 0,
+            g: 0,
+            b: n,
+            a: 0,
+        }
+    }
+
+    pub fn a(n: u8) -> RGBA {
+        RGBA {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: n,
+        }
+    }
 
     pub fn to_argb_u32(&self) -> u32 {
         (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | (self.b as u32)
