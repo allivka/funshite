@@ -55,7 +55,7 @@ fn main() {
     let renderer = Renderer {
         objects,
         polygon_outline_color: RGBA::g(255),
-        polygon_outline_thickness: 5,
+        polygon_outline_thickness: 1,
         fov_degrees: 60.0,
         close_visibility_distance: 0.1,
         index_pair_buffer: Vec::new(),
