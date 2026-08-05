@@ -71,39 +71,35 @@ impl Canvas {
     }
 
     pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
-
-
         let dx = (end.0 - start.0).abs();
         let dy = (end.1 - start.1).abs();
 
         let sx = if start.0 < end.0 { 1 } else { -1 };
         let sy = if start.1 < end.1 { 1 } else { -1 };
 
-        let mut err = dy - dx;
+        let mut err = dx as isize - dy as isize;
         let mut e2: isize;
 
-        let mut y: isize = 0;
-        let mut x: isize = 0;
+        let mut x = start.0;
+        let mut y = start.1;
 
         loop {
-            self.set(Vec2i(x + start.0, y + start.1), color);
+            self.set(Vec2i(x, y), color);
 
-            if x == dx * sx && y == dy * sy { break; }
+            if x == end.0 && y == end.1 { break; }
 
             e2 = 2 * err;
 
-            if e2 > dx {
-                y += sy;
-                err -= dx;
-            }
-
-            if e2 < dy {
+            if e2 > -(dx as isize) {
+                err -= dy as isize;
                 x += sx;
-                err += dy;
             }
 
+            if e2 < dx as isize {
+                err += dx as isize;
+                y += sy;
+            }
         }
-
     }
 
     pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
