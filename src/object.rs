@@ -5,33 +5,62 @@ use std::path::Path;
 use crate::base::{Vec2d, Vec3d};
 
 
-// 0 - vertex, 1 - texture, 2 - normal
-#[derive(Copy, Clone)]
-pub struct VertexProps(pub isize, pub isize, pub isize);
+
+#[derive(Copy, Clone, Debug)]
+pub struct VertexProps {
+    pub vertex: usize,
+    pub texture: Option<usize>,
+    pub normal: Option<usize>,
+}
 
 impl VertexProps {
-    pub fn new_from_string(s: &str) -> VertexProps {
-        let v: Vec<&str> = s.split("/").collect();
-        let mut res =  VertexProps(0, 0, 0);
+    pub fn parse(s: &str, v_off: usize, t_off: usize, n_off: usize) -> Option<Self> {
+        let mut parts = s.split('/');
 
-        res.0 = v[0].parse::<isize>().unwrap() - 1;
+        let v_str = parts.next()?;
+        let v_idx: isize = v_str.parse().ok()?;
 
-        if v.len() == 1 {
-            return res;
+        if v_idx <= 0 {
+            return None;
         }
 
-        if v[1] != "" {
-            res.1 = v[1].parse::<isize>().unwrap() - 1;
-        }
+        let global_idx = (v_idx - 1) as usize;
+        let vertex = global_idx.checked_sub(v_off)?;
 
-        if v.len() == 2 {
-            return res;
-        }
 
-        res.2 = v[2].parse::<isize>().unwrap() - 1;
+        let texture = match parts.next() {
+            Some("") | None => None,
+            Some(t_str) => {
+                let t_idx: isize = t_str.parse().ok()?;
 
-        res
+                if t_idx > 0 {
+                    let global_idx = (t_idx - 1) as usize;
+                    global_idx.checked_sub(t_off)
 
+                } else {
+                    None
+                }
+            }
+        };
+
+        let normal = match parts.next() {
+            Some("") | None => None,
+            Some(n_str) => {
+                let n_idx: isize = n_str.parse().ok()?;
+
+                if n_idx > 0 {
+                    let global_idx = (n_idx - 1) as usize;
+                    global_idx.checked_sub(n_off)
+
+                } else {
+                    None
+                }
+            }
+        };
+
+        Some(VertexProps {
+            vertex, texture, normal
+        })
     }
 }
 
@@ -44,81 +73,101 @@ pub struct Object {
 }
 
 impl Object {
-
-    pub fn new(name: &str) -> Object {
+    pub fn new(name: &str) -> Self {
         Object {
             name: name.to_string(),
             vertices: Vec::new(),
             normals: Vec::new(),
             texture_coords: Vec::new(),
             faces: Vec::new(),
-
         }
     }
-    pub fn parse_line(&mut self, s: &str) {
 
-        let l: Vec<&str> = s.split(" ").collect();
+    pub fn parse_line(&mut self, line: &str, v_off: usize, vt_off: usize, vn_off: usize) {
+        let mut tokens = line.split_whitespace();
+        let keyword = match tokens.next() {
+            Some(k) => k,
+            None => return,
+        };
 
-        match l[0] {
+        match keyword {
             "v" => {
-                self.vertices.push(Vec3d(l[1].parse().unwrap(), l[2].parse().unwrap(), l[3].parse().unwrap()));
-            },
-            "vt" => {
-                self.texture_coords.push(Vec2d(l[1].parse().unwrap(), l[2].parse().unwrap()))
-
-            },
-            "vn" => {
-                self.normals.push(Vec3d(l[1].parse().unwrap(), l[2].parse().unwrap(), l[3].parse().unwrap()));
-
-            },
-            "f" => {
-                let mut t: Vec<VertexProps> = Vec::with_capacity(l.len() - 1);
-
-                l[1..].iter().for_each(
-                    |s| {
-                        t.push(VertexProps::new_from_string(s))
+                if let (Some(x), Some(y), Some(z)) = (tokens.next(), tokens.next(), tokens.next()) {
+                    if let (Ok(x), Ok(y), Ok(z)) = (x.parse(), y.parse(), z.parse()) {
+                        self.vertices.push(Vec3d(x, y, z));
                     }
-                );
-
-                self.faces.push(t)
-
-            },
-            _ => return
+                }
+            }
+            "vt" => {
+                if let (Some(u), Some(v)) = (tokens.next(), tokens.next()) {
+                    if let (Ok(u), Ok(v)) = (u.parse(), v.parse()) {
+                        self.texture_coords.push(Vec2d(u, v));
+                    }
+                }
+            }
+            "vn" => {
+                if let (Some(x), Some(y), Some(z)) = (tokens.next(), tokens.next(), tokens.next()) {
+                    if let (Ok(x), Ok(y), Ok(z)) = (x.parse(), y.parse(), z.parse()) {
+                        self.normals.push(Vec3d(x, y, z));
+                    }
+                }
+            }
+            "f" => {
+                let face: Vec<VertexProps> = tokens
+                    .filter_map(|s| VertexProps::parse(s, v_off, vt_off, vn_off))
+                    .collect();
+                if !face.is_empty() {
+                    self.faces.push(face);
+                }
+            }
+            _ => {}
         }
-
     }
 }
 
 pub fn parse_file(path: &Path) -> Result<Vec<Object>, std::io::Error> {
     let file = File::open(path)?;
-
     let mut objects: Vec<Object> = Vec::new();
 
-    for (i, line) in BufReader::new(file).lines().enumerate() {
-        let line = match line {
-            Ok(l) => l.trim().to_string(),
-            Err(e) => { return Err(e) }
-        };
-        
-        if line.is_empty() {
+    let mut v_offset = 0usize;
+    let mut vt_offset = 0usize;
+    let mut vn_offset = 0usize;
+
+    for line in BufReader::new(file).lines() {
+        let line = line?;
+        let trimmed = line.trim();
+
+        if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
 
-        match &line[..2] {
-            "o " => {
-                objects.push(Object::new(line.split_once(' ').unwrap().1));
-            },
-            "v " | "f " | "vt" | "vn" => {
-                if i == 0 {
-                    objects.push(Object::new("untitled_object"));
+        let mut tokens = trimmed.split_whitespace();
+        let keyword = match tokens.next() {
+            Some(k) => k,
+            None => continue,
+        };
+
+        match keyword {
+            "o" | "g" => {
+
+                if let Some(last_obj) = objects.last() {
+                    v_offset += last_obj.vertices.len();
+                    vt_offset += last_obj.texture_coords.len();
+                    vn_offset += last_obj.normals.len();
                 }
 
-                objects.last_mut().unwrap().parse_line(&line);
+                let name = tokens.collect::<Vec<_>>().join(" ");
+                objects.push(Object::new(if name.is_empty() { "object" } else { &name }));
             }
-            _ => continue
+            "v" | "vt" | "vn" | "f" => {
+                if objects.is_empty() {
+                    objects.push(Object::new("untitled_object"));
+                }
+                objects.last_mut().unwrap().parse_line(trimmed, v_offset, vt_offset, vn_offset);
+            }
+            _ => continue,
         }
     }
 
     Ok(objects)
 }
-

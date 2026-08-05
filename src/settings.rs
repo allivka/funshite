@@ -4,8 +4,9 @@ use std::f64::consts::PI;
 use crate::base;
 use crate::base::{Axis, DirectionKind, Motion, MotionKind};
 
-const DEFAULT_LINEAR_SPEED: f64 = 1.0 / 2.0;
-const DEFAULT_ROTATION_SPEED: f64 = PI / 90.0;
+pub const DEFAULT_LINEAR_SPEED: f64 = 1.0 / 15.0;
+pub const DEFAULT_ROTATION_SPEED: f64 = PI / 180.0;
+pub const DEFAULT_SPEED_FACTOR_ADDITION: f64 = 0.1;
 
 pub struct Settings {
     pub keys: HashMap<Key, Motion>,
@@ -95,13 +96,27 @@ impl Settings {
         self.keys.insert(Key::Right, Motion {
             kind: MotionKind::Rotation,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y(DEFAULT_ROTATION_SPEED),
+            axis: Axis::Y(-DEFAULT_ROTATION_SPEED),
         });
 
         self.keys.insert(Key::Left, Motion {
             kind: MotionKind::Rotation,
             direction: DirectionKind::Vertical,
-            axis: Axis::Y(-DEFAULT_ROTATION_SPEED),
+            axis: Axis::Y(DEFAULT_ROTATION_SPEED),
+        });
+
+        // Z-rotation keys - Q, E
+
+        self.keys.insert(Key::Q, Motion {
+            kind: MotionKind::Rotation,
+            direction: DirectionKind::Straight,
+            axis: Axis::Z(DEFAULT_ROTATION_SPEED),
+        });
+
+        self.keys.insert(Key::E, Motion {
+            kind: MotionKind::Rotation,
+            direction: DirectionKind::Straight,
+            axis: Axis::Z(-DEFAULT_ROTATION_SPEED),
         });
 
 

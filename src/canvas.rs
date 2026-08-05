@@ -104,6 +104,7 @@ impl Canvas {
     }
 
     pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
+        //TODO: make pixels to count for thickness actually perpendicular to the main line
 
         if thickness < 1 {
             return;
@@ -183,39 +184,47 @@ impl Canvas {
         if hv.1 < lv.1 { std::mem::swap(&mut hv, &mut lv); }
         if hv.1 < mv.1 { std::mem::swap(&mut hv, &mut mv); }
 
-        let lh_coef = LineCoefficients::new_from_line(lv, hv);
-        let lm_coef = LineCoefficients::new_from_line(lv, mv);
-        let mh_coef = LineCoefficients::new_from_line(mv, hv);
+        let color_u32 = color.to_argb_u32();
 
-        let mut fill_half = |low: &Vec2i, high: &Vec2i, coef: &LineCoefficients | {
-            let mut x1: f32;
-            let mut x2: f32;
+        let get_x = |y: isize, p1: Vec2i, p2: Vec2i| -> isize {
+            let dy = p2.1 - p1.1;
 
-            for y in min(low.1, high.1)..=max(low.1, high.1) {
-                x1 = if lh_coef.k.is_finite() {
-                    ((y as f32) - lh_coef.b) / lh_coef.k
-                } else {
-                    lv.0 as f32
-                };
+            if dy == 0 {
+                return p1.0;
+            }
 
-                x2 = if coef.k.is_finite() {
-                    ((y as f32) - coef.b) / coef.k
-                } else {
-                    low.0 as f32
-                };
+            p1.0 + (y - p1.1) * (p2.0 - p1.0) / dy
+        };
 
-                for x in min(x1 as isize, x2 as isize)..=max(x1 as isize, x2 as isize) {
-                    self.set(Vec2i(x, y), color);
+        let mut fill_half = |low: Vec2i, high: Vec2i| {
+            if low.1 == high.1 {
+                return;
+            }
+
+            let y_start = max(low.1, 0);
+            let y_end = min(high.1, self.height - 1);
+
+            for y in y_start..=y_end {
+                let x1 = get_x(y, lv, hv);
+                let x2 = get_x(y, low, high);
+
+                let start_x = max(min(x1, x2), 0);
+                let end_x = min(max(x1, x2), self.width - 1);
+
+                if start_x <= end_x {
+                    let row = (y * self.width) as usize;
+                    let start_idx = row + start_x as usize;
+                    let end_idx = row + end_x as usize;
+                    self.buffer[start_idx..=end_idx].fill(color_u32);
                 }
             }
         };
 
-        fill_half(&lv, &mv, &lm_coef);
-        fill_half(&mv, &hv, &mh_coef);
-
+        fill_half(lv, mv);
+        fill_half(mv, hv);
     }
 
-    pub fn fill_polygon(&mut self, points: Vec<Vec2i>, color: RGBA) {
+    pub fn fill_polygon(&mut self, points: &Vec<Vec2i>, color: RGBA) {
         match points.len() {
             0 => {
                 return

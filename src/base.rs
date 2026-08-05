@@ -110,7 +110,7 @@ impl LineCoefficients {
         let b = if dx == 0.0 {
             start.0 as f32
         } else {
-            start.1 as f32 - k * start.0 as f32  // y = kx + b → b = y - kx
+            start.1 as f32 - k * start.0 as f32
         };
 
         LineCoefficients { k, b }
