@@ -31,8 +31,8 @@ impl Renderer {
                     );
 
                     v2i_vec.push(canvas.translate_centered_to_standard(Vec2i(
-                        (v3d_buff.0 / -v3d_buff.2 + 0.001) as isize,
-                        (v3d_buff.1 / -v3d_buff.2 + 0.001) as isize
+                        (v3d_buff.0 / -(v3d_buff.2 + 0.001)) as isize,
+                        (v3d_buff.1 / -(v3d_buff.2 + 0.001)) as isize
                     )));
                 }
 

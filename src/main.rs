@@ -11,7 +11,6 @@ use minifb::{Key, Scale, ScaleMode, Window, WindowOptions};
 use std::path::Path;
 use base::{Vec2i, RGBA};
 use canvas::Canvas;
-use object::Object;
 use crate::base::Vec3d;
 use crate::renderer::Renderer;
 
