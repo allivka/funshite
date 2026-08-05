@@ -40,18 +40,16 @@ fn main() {
     });
 
     window.set_target_fps(60);
-    // window.set_cursor_visibility(false);
 
     let mut config = settings::Settings::default_settings();
 
     let mut camera = viewer::Viewer::new(Vec3d(0.0, 0.0, 0.0));
 
     let objects = match object::parse_file(Path::new("test.obj")) {
-        Ok(objects) => {
-            println!("Successfully parsed obj file");
-            objects
-        },
-        Err(e) => {panic!("Failed parsing obj file:\t{}", e);}
+        Ok(objects) => objects,
+        Err(e) => {
+            panic!("Failed parsing obj file:\t{}", e);
+        }
     };
 
     let renderer = Renderer {
@@ -60,7 +58,9 @@ fn main() {
         polygon_outline_thickness: 5,
         fov_degrees: 60.0,
         close_visibility_distance: 0.1,
-    };
+        index_pair_buffer: Vec::new(),
+        focal_length: 0.0,
+    }.init(&canvas);
 
     let mut mouse_pos_prev: (f32, f32) = (0.0, 0.0);
 

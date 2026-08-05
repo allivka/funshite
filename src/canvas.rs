@@ -79,7 +79,7 @@ impl Canvas {
         min(max(pos.1, 0) * self.width + max(pos.0, 0), self.width * self.height - 1) as usize
     }
 
-    pub fn set(&mut self, pos: Vec2i, color: RGBA) {
+    pub fn set(&self, pos: Vec2i, color: RGBA) {
         if !self.check(pos) { return; }
         self.buffer[Self::idx(pos, Vec2i(self.width, self.height))].store(color.to_argb_u32(), Ordering::Relaxed);
     }
@@ -88,12 +88,12 @@ impl Canvas {
         RGBA::from_argb_u32(self.buffer[self.idx_of(pos)].load(Ordering::Relaxed))
     }
 
-    pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
+    pub fn set_fixed(&self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
         self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize].store(color.to_argb_u32(), Ordering::Relaxed);
     }
 
-    pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
+    pub fn draw_line(&self, start: Vec2i, end: Vec2i, color: RGBA) {
         let dx = (end.0 - start.0).abs();
         let dy = -(end.1 - start.1).abs();
 
@@ -126,7 +126,7 @@ impl Canvas {
         }
     }
 
-    pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
+    pub fn draw_line_thick(&self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
         //TODO: make pixels to count for thickness actually perpendicular to the main line
 
         if thickness < 1 {
