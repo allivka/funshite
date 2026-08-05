@@ -1,50 +1,13 @@
 
-use std::fmt;
-
 #[derive(Copy, Clone)]
 pub struct Vec2i(pub isize, pub isize);
-
-impl fmt::Debug for Vec2i {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Vec2i({}, {})", self.0, self.1)
-    }
-}
-
-impl fmt::Display for Vec2i {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.0, self.1)
-    }
-}
 
 #[derive(Copy, Clone)]
 pub struct Vec2d(pub f64, pub f64);
 
-impl fmt::Debug for Vec2d {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Vec2d({:.2}, {:.2})", self.0, self.1)
-    }
-}
-
-impl fmt::Display for Vec2d {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({:.2}, {:.2})", self.0, self.1)
-    }
-}
 
 #[derive(Copy, Clone)]
 pub struct Vec3d(pub f64, pub f64, pub f64);
-
-impl fmt::Debug for Vec3d {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Vec3d({:.2}, {:.2}, {:.2})", self.0, self.1, self.2)
-    }
-}
-
-impl fmt::Display for Vec3d {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({:.2}, {:.2}, {:.2})", self.0, self.1, self.2)
-    }
-}
 
 pub const I3X3: [[f64; 3]; 3] = [
     [1.0, 0.0, 0.0],

@@ -14,21 +14,21 @@ impl VertexProps {
         let v: Vec<&str> = s.split("/").collect();
         let mut res =  VertexProps(0, 0, 0);
 
-        res.0 = v[0].parse::<isize>().unwrap() - 1;
+        res.0 = v[0].parse::<isize>().unwrap();
 
         if v.len() == 1 {
             return res;
         }
 
         if v[1] != "" {
-            res.1 = v[1].parse::<isize>().unwrap() - 1;
+            res.1 = v[1].parse::<isize>().unwrap();
         }
 
         if v.len() == 2 {
             return res;
         }
 
-        res.2 = v[2].parse::<isize>().unwrap() - 1;
+        res.2 = v[2].parse::<isize>().unwrap();
 
         res
 
