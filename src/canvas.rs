@@ -1,5 +1,5 @@
 use std::cmp::{max, min};
-use crate::base::{Vec2i, RGBA, LineCoefficients};
+use crate::base::{Vec2i, RGBA};
 
 pub struct Canvas {
     pub width: isize,

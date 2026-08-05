@@ -1,4 +1,4 @@
-use crate::base::{transpose_matrix3x3, multiply_vector3d_by_matrix3x3, Vec2i, Vec3d, RGBA, Vec2d};
+use crate::base::{transpose_matrix3x3, multiply_vector3d_by_matrix3x3, Vec2i, Vec3d, RGBA};
 use crate::canvas::Canvas;
 use crate::object::Object;
 use crate::viewer::Viewer;
