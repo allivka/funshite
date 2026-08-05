@@ -3,7 +3,8 @@ use crate::object::Object;
 use crate::viewer::Viewer;
 
 pub struct Renderer {
-    objects: Vec<Object>,
+    pub objects: Vec<Object>,
+    pub polygon_outline_thickness: isize,
 }
 
 impl Renderer {

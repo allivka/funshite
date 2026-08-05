@@ -68,6 +68,23 @@ fn main() {
         canvas.fill_polygon(vec!{Vec2i(0, 0), Vec2i(200, 200)}, RGBA { r: 255, g: 0, b: 255, a: 0 });
         canvas.fill_polygon(vec!{Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), Vec2i(450, 1000)}, RGBA { r: 255, g: 255, b: 0, a: 0 });
 
+
+        canvas.draw_line_thick(Vec2i(500, 100), Vec2i(800, 100), RGBA { r: 255, g: 0, b: 0, a: 0 }, 1);
+        canvas.draw_line_thick(Vec2i(500, 150), Vec2i(800, 150), RGBA { r: 0, g: 255, b: 0, a: 0 }, 3);
+        canvas.draw_line_thick(Vec2i(500, 200), Vec2i(800, 200), RGBA { r: 0, g: 0, b: 255, a: 0 }, 5);
+        
+
+        canvas.draw_line_thick(Vec2i(550, 100), Vec2i(550, 250), RGBA { r: 255, g: 255, b: 0, a: 0 }, 2);
+        
+
+        canvas.draw_line_thick(Vec2i(600, 100), Vec2i(750, 250), RGBA { r: 255, g: 0, b: 255, a: 0 }, 3);
+        canvas.draw_line_thick(Vec2i(750, 100), Vec2i(600, 250), RGBA { r: 0, g: 255, b: 255, a: 0 }, 2);
+
+
+        canvas.draw_rect(Vec2i(100, 400), Vec2i(200, 150), RGBA { r: 255, g: 100, b: 0, a: 0 }, 2);
+        canvas.draw_rect(Vec2i(350, 400), Vec2i(200, 150), RGBA { r: 100, g: 255, b: 0, a: 0 }, 3);
+        canvas.draw_rect(Vec2i(600, 400), Vec2i(200, 150), RGBA { r: 0, g: 100, b: 255, a: 0 }, 5);
+
         window.update_with_buffer(&canvas.buffer, canvas.width as usize, canvas.height as usize).unwrap();
     }
 

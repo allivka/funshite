@@ -94,6 +94,68 @@ impl Canvas {
 
     }
 
+    pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
+
+        if thickness < 1 {
+            return;
+        }
+
+        let mut shift: isize = 0;
+
+        for i in 1..=thickness {
+            self.draw_line(
+                Vec2i(start.0 + shift, start.1 + shift),
+                Vec2i(end.0 + shift, end.1 + shift),
+                color,
+            );
+
+            if i % 2 != 0 {
+                shift = shift.abs() + 1
+            } else {
+                shift = -shift;
+            }
+        }
+    }
+
+    pub fn draw_rect(&mut self, pos: Vec2i, size: Vec2i, color: RGBA, thickness: isize) {
+        self.draw_line_thick(pos, Vec2i(pos.0 + size.0, pos.1), color, thickness);
+        self.draw_line_thick(pos, Vec2i(pos.0, pos.1 + size.1), color, thickness);
+        self.draw_line_thick(Vec2i(pos.0 + size.0, pos.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
+        self.draw_line_thick( Vec2i(pos.0, pos.1 + size.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
+    }
+
+    pub fn draw_polygon(&mut self, points: Vec<Vec2i>,  color: RGBA, thickness: isize) {
+        if points.is_empty() {
+            return;
+        }
+
+        if points.len() == 1 {
+            self.set(points[0], color);
+            return;
+        }
+
+        match points.len() {
+            0 => {
+                return;
+            },
+            1 => {
+                self.set(points[0], color);
+                return;
+            },
+            2 => {
+                self.draw_line_thick(points[0], points[1], color, thickness);
+                return;
+            }
+
+            _ => ()
+        }
+
+        for i in 0..points.len() - 1 {
+            self.draw_line_thick(points[i], points[i + 1], color, thickness);
+        }
+
+    }
+
     pub fn fill_rect(&mut self, mut start: Vec2i, mut end: Vec2i, color: RGBA) {
         self.fix(&mut start);
         self.fix(&mut end);
@@ -144,6 +206,9 @@ impl Canvas {
 
     pub fn fill_polygon(&mut self, points: Vec<Vec2i>, color: RGBA) {
         match points.len() {
+            0 => {
+                return
+            },
             1 => {
                 self.set(points[0], color);
                 return
