@@ -1,7 +1,12 @@
 use std::cmp::{max, min};
 use std::sync::atomic::{AtomicU32, Ordering};
-use crate::base::{Vec2i, RGBA};
 use std::slice;
+use std::path::Path;
+use std::fs::File;
+use std::io::BufWriter;
+use png::ColorType;
+use crate::base::{Vec2i, RGBA};
+
 
 pub struct Canvas {
     pub width: isize,
@@ -291,6 +296,26 @@ impl Canvas {
         self.draw_rect(Vec2i(100, 400), Vec2i(200, 150), RGBA { r: 255, g: 100, b: 0, a: 0 }, 2);
         self.draw_rect(Vec2i(350, 400), Vec2i(200, 150), RGBA { r: 100, g: 255, b: 0, a: 0 }, 3);
         self.draw_rect(Vec2i(600, 400), Vec2i(200, 150), RGBA { r: 0, g: 100, b: 255, a: 0 }, 5);
+    }
+
+    pub fn save_to_png(&self, path: &Path) -> std::io::Result<()> {
+
+        let mut buffer = Vec::with_capacity(self.buffer.len() * 4);
+
+        for atom in &self.buffer {
+            let color = RGBA::from_argb_u32(atom.load(Ordering::Relaxed));
+            buffer.extend_from_slice(&[color.r, color.g, color.b, color.a]);
+        }
+
+        let file = File::create(path)?;
+
+        let mut encoder = png::Encoder::new(BufWriter::new(file), self.width as u32, self.height as u32);
+        encoder.set_color(ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+
+        encoder.write_header()?.write_image_data(buffer.as_slice())?;
+
+        Ok(())
     }
 
 }
