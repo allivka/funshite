@@ -78,6 +78,14 @@ fn main() {
             config.set_speed_factor((config.speed_factor + scroll.1.signum() as f64 * settings::DEFAULT_SPEED_FACTOR_ADDITION).max(0.0));
         });
 
+        if window.is_key_down(Key::PageUp) {
+            config.set_speed_factor((config.speed_factor + settings::DEFAULT_SPEED_FACTOR_ADDITION).max(0.0));
+        }
+
+        if window.is_key_down(Key::PageDown) {
+            config.set_speed_factor((config.speed_factor - settings::DEFAULT_SPEED_FACTOR_ADDITION).max(0.0));
+        }
+
         if window.is_key_down(Key::F) {
             if let Some(image_path) = rfd::FileDialog::new().add_filter("PNG Image", &["png"]).save_file() {
                 match canvas.save_to_png(&image_path) {
