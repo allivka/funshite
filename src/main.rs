@@ -58,7 +58,7 @@ fn main() {
         panic!("No file found");
     };
 
-    let renderer = Renderer {
+    let mut renderer = Renderer {
         objects,
         polygon_outline_color: RGBA::g(255),
         polygon_outline_thickness: 1,
@@ -87,6 +87,16 @@ fn main() {
                     }
                 }
             }
+        }
+
+        if window.is_key_down(Key::Comma) {
+            if renderer.polygon_outline_thickness > 1 {
+                renderer.polygon_outline_thickness -= 1;
+            }
+        }
+
+        if window.is_key_down(Key::Period) {
+            renderer.polygon_outline_thickness += 1;
         }
 
         if window.is_key_down(Key::T) {
