@@ -91,7 +91,7 @@ impl Renderer {
     }
 
 
-    pub fn render(&self, canvas: &mut Canvas<AtomicU32>, camera: &Viewer) {
+    pub fn render(&self, canvas: &Canvas<AtomicU32>, camera: &Viewer) {
         let transpose_rotation_matrix = transpose_matrix3x3(&camera.rotation);
 
         self.index_pair_buffer.par_iter().for_each(|(v1_idx, v2_idx)| {

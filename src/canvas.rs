@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::cmp::{max, min};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::slice;
@@ -8,25 +9,25 @@ use png::ColorType;
 use crate::base::{Vec2i, RGBA};
 
 // CBF - Canvas Buffer Value
-trait CBF {
+pub trait CBF {
     fn get(&self) -> u32;
 
-    fn set(&mut self, value: u32);
+    fn set(&self, value: u32);
 
     fn new() -> Self;
 }
 
-impl CBF for u32 {
+impl CBF for Cell<u32> {
     fn get(&self) -> u32 {
-        *self
+        self.get()
     }
 
-    fn set(&mut self, value: u32) {
-        *self = value;
+    fn set(&self, value: u32) {
+        self.set(value);
     }
 
     fn new() -> Self {
-        u32::default()
+        Cell::new(u32::default())
     }
 }
 
@@ -35,7 +36,7 @@ impl CBF for AtomicU32 {
         self.load(Ordering::Relaxed)
     }
 
-    fn set(&mut self, value: u32) {
+    fn set(&self, value: u32) {
         self.store(value, Ordering::Relaxed);
     }
 
@@ -45,7 +46,7 @@ impl CBF for AtomicU32 {
 }
 
 
-// Accepts types that implement private trait CBF: u32 and AtomicU32
+// Accepts types that implement private trait CBF: Cell<u32> and AtomicU32
 pub struct Canvas<T: CBF> {
     pub width: isize,
     pub height: isize,
@@ -122,7 +123,7 @@ impl<T: CBF> Canvas<T> {
         min(max(pos.1, 0) * self.width + max(pos.0, 0), self.width * self.height - 1) as usize
     }
 
-    pub fn set(&mut self, pos: Vec2i, color: RGBA) {
+    pub fn set(&self, pos: Vec2i, color: RGBA) {
         if !self.check(pos) { return; }
         self.buffer[Self::idx(pos, Vec2i(self.width, self.height))].set(color.to_argb_u32());
     }
@@ -131,12 +132,12 @@ impl<T: CBF> Canvas<T> {
         RGBA::from_argb_u32(self.buffer[self.idx_of(pos)].get())
     }
 
-    pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
+    pub fn set_fixed(&self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
         self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize].set(color.to_argb_u32());
     }
 
-    pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
+    pub fn draw_line(&self, start: Vec2i, end: Vec2i, color: RGBA) {
         let dx = (end.0 - start.0).abs();
         let dy = -(end.1 - start.1).abs();
 
@@ -169,7 +170,7 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
+    pub fn draw_line_thick(&self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
         //TODO: make pixels to count for thickness actually perpendicular to the main line
 
         if thickness < 1 {
@@ -193,14 +194,14 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn draw_rect(&mut self, pos: Vec2i, size: Vec2i, color: RGBA, thickness: isize) {
+    pub fn draw_rect(&self, pos: Vec2i, size: Vec2i, color: RGBA, thickness: isize) {
         self.draw_line_thick(pos, Vec2i(pos.0 + size.0, pos.1), color, thickness);
         self.draw_line_thick(pos, Vec2i(pos.0, pos.1 + size.1), color, thickness);
         self.draw_line_thick(Vec2i(pos.0 + size.0, pos.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
         self.draw_line_thick( Vec2i(pos.0, pos.1 + size.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
     }
 
-    pub fn draw_polygon(&mut self, points: &Vec<Vec2i>,  color: RGBA, thickness: isize) {
+    pub fn draw_polygon(&self, points: &Vec<Vec2i>,  color: RGBA, thickness: isize) {
         if points.is_empty() {
             return;
         }
@@ -234,7 +235,7 @@ impl<T: CBF> Canvas<T> {
 
     }
 
-    pub fn fill_rect(&mut self, mut start: Vec2i, mut end: Vec2i, color: RGBA) {
+    pub fn fill_rect(&self, mut start: Vec2i, mut end: Vec2i, color: RGBA) {
         self.fix(&mut start);
         self.fix(&mut end);
 
@@ -245,7 +246,7 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn fill_triangle(&mut self, mut lv: Vec2i, mut mv: Vec2i, mut hv: Vec2i, color: RGBA) {
+    pub fn fill_triangle(&self, mut lv: Vec2i, mut mv: Vec2i, mut hv: Vec2i, color: RGBA) {
         if mv.1 < lv.1 { std::mem::swap(&mut mv, &mut lv); }
         if hv.1 < lv.1 { std::mem::swap(&mut hv, &mut lv); }
         if hv.1 < mv.1 { std::mem::swap(&mut hv, &mut mv); }
@@ -261,7 +262,7 @@ impl<T: CBF> Canvas<T> {
             p1.0 + (y - p1.1) * (p2.0 - p1.0) / dy
         };
 
-        let mut fill_half = |low: Vec2i, high: Vec2i| {
+        let fill_half = |low: Vec2i, high: Vec2i| {
             if low.1 == high.1 {
                 return;
             }
@@ -280,7 +281,7 @@ impl<T: CBF> Canvas<T> {
                     let row = (y * self.width) as usize;
                     let start_idx = row + start_x as usize;
                     let end_idx = row + end_x as usize;
-                    self.buffer[start_idx..=end_idx].iter_mut().for_each(|v| v.set(color.to_argb_u32()));
+                    self.buffer[start_idx..=end_idx].iter().for_each(|v| v.set(color.to_argb_u32()));
                 }
             }
         };
@@ -289,7 +290,7 @@ impl<T: CBF> Canvas<T> {
         fill_half(mv, hv);
     }
 
-    pub fn fill_polygon(&mut self, points: &Vec<Vec2i>, color: RGBA) {
+    pub fn fill_polygon(&self, points: &Vec<Vec2i>, color: RGBA) {
         match points.len() {
             0 => {
                 return
@@ -310,7 +311,7 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn test_canvas_primitives(&mut self) {
+    pub fn test_canvas_primitives(&self) {
         self.fill_rect(Vec2i(0, 0), Vec2i(200, 200), RGBA { r: 0, g: 0, b: 255, a: 0 });
         self.draw_line(Vec2i(0, 0), Vec2i(200, 200), RGBA { r: 255, g: 255, b: 255, a: 0 });
         self.fill_triangle(Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), RGBA { r: 255, g: 0, b: 0, a: 0 });

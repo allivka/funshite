@@ -2,6 +2,7 @@ use std::sync::atomic::AtomicU32;
 use minifb::{MouseButton, MouseMode, Window};
 use crate::base::{Vec2i, RGBA};
 use crate::canvas::Canvas;
+use num_traits::{AsPrimitive, Num};
 
 pub const DEFAULT_SLIDER_COLOR: RGBA = RGBA::black();
 pub const DEFAULT_SLIDER_THICKNESS: isize = 3;
@@ -53,7 +54,7 @@ pub struct Slider<T, S: SliderShader> {
     slider_offset: isize
 }
 
-impl<T, S: SliderShader> Slider<T, S> {
+impl<T: Num + AsPrimitive<f64>, S: SliderShader> Slider<T, S> {
 
     pub fn new(pos: Vec2i, size: Vec2i, lower_bound: T, upper_bound: T, shader: S) -> Slider<T, S> {
         Slider {
@@ -103,6 +104,12 @@ impl<T, S: SliderShader> Slider<T, S> {
                 );
             }
         }
+    }
+
+    pub fn calc_value(&self) -> T
+    where f64: AsPrimitive<T>
+    {
+        (self.slider_offset as f64 / self.size.0 as f64 * (self.upper_bound - self.lower_bound).as_()).as_()
     }
 
 }
