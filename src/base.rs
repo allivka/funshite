@@ -117,7 +117,7 @@ impl LineCoefficients {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct RGBA {
     pub r: u8,
     pub g: u8,
@@ -135,12 +135,21 @@ impl RGBA {
             a: (0b1111_1111 & (n >> 24)) as u8,
         }
     }
-
-    pub fn new() -> RGBA {
+    
+    pub const fn black() -> RGBA {
         RGBA {
             r: 0,
             g: 0,
             b: 0,
+            a: 255,
+        }
+    }
+
+    pub const fn white() -> RGBA {
+        RGBA {
+            r: 255,
+            g: 255,
+            b: 255,
             a: 255,
         }
     }

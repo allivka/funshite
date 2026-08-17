@@ -7,20 +7,58 @@ use std::io::BufWriter;
 use png::ColorType;
 use crate::base::{Vec2i, RGBA};
 
+// CBF - Canvas Buffer Value
+trait CBF {
+    fn get(&self) -> u32;
 
-pub struct Canvas {
-    pub width: isize,
-    pub height: isize,
-    pub buffer: Vec<AtomicU32>,
+    fn set(&mut self, value: u32);
+
+    fn new() -> Self;
 }
 
-impl Canvas {
-    pub fn new(width: usize, height: usize) -> Canvas {
+impl CBF for u32 {
+    fn get(&self) -> u32 {
+        *self
+    }
+
+    fn set(&mut self, value: u32) {
+        *self = value;
+    }
+
+    fn new() -> Self {
+        u32::default()
+    }
+}
+
+impl CBF for AtomicU32 {
+    fn get(&self) -> u32 {
+        self.load(Ordering::Relaxed)
+    }
+
+    fn set(&mut self, value: u32) {
+        self.store(value, Ordering::Relaxed);
+    }
+
+    fn new() -> Self {
+        AtomicU32::new(0)
+    }
+}
+
+
+// Accepts types that implement private trait CBF: u32 and AtomicU32
+pub struct Canvas<T: CBF> {
+    pub width: isize,
+    pub height: isize,
+    pub buffer: Vec<T>,
+}
+
+impl<T: CBF> Canvas<T> {
+    pub fn new(width: usize, height: usize) -> Canvas<T> {
 
         let mut buffer = Vec::with_capacity(width * height);
 
         for _ in 0..width * height {
-            buffer.push(AtomicU32::new(0));
+            buffer.push(T::new())
         }
 
         Canvas {
@@ -84,21 +122,21 @@ impl Canvas {
         min(max(pos.1, 0) * self.width + max(pos.0, 0), self.width * self.height - 1) as usize
     }
 
-    pub fn set(&self, pos: Vec2i, color: RGBA) {
+    pub fn set(&mut self, pos: Vec2i, color: RGBA) {
         if !self.check(pos) { return; }
-        self.buffer[Self::idx(pos, Vec2i(self.width, self.height))].store(color.to_argb_u32(), Ordering::Relaxed);
+        self.buffer[Self::idx(pos, Vec2i(self.width, self.height))].set(color.to_argb_u32());
     }
 
     pub fn get(&self, pos: Vec2i) -> RGBA {
-        RGBA::from_argb_u32(self.buffer[self.idx_of(pos)].load(Ordering::Relaxed))
+        RGBA::from_argb_u32(self.buffer[self.idx_of(pos)].get())
     }
 
-    pub fn set_fixed(&self, mut pos: Vec2i, color: RGBA) {
+    pub fn set_fixed(&mut self, mut pos: Vec2i, color: RGBA) {
         self.fix(&mut pos);
-        self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize].store(color.to_argb_u32(), Ordering::Relaxed);
+        self.buffer[(max(pos.1, 0) * self.width + pos.0) as usize].set(color.to_argb_u32());
     }
 
-    pub fn draw_line(&self, start: Vec2i, end: Vec2i, color: RGBA) {
+    pub fn draw_line(&mut self, start: Vec2i, end: Vec2i, color: RGBA) {
         let dx = (end.0 - start.0).abs();
         let dy = -(end.1 - start.1).abs();
 
@@ -131,7 +169,7 @@ impl Canvas {
         }
     }
 
-    pub fn draw_line_thick(&self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
+    pub fn draw_line_thick(&mut self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
         //TODO: make pixels to count for thickness actually perpendicular to the main line
 
         if thickness < 1 {
@@ -223,7 +261,7 @@ impl Canvas {
             p1.0 + (y - p1.1) * (p2.0 - p1.0) / dy
         };
 
-        let fill_half = |low: Vec2i, high: Vec2i| {
+        let mut fill_half = |low: Vec2i, high: Vec2i| {
             if low.1 == high.1 {
                 return;
             }
@@ -242,7 +280,7 @@ impl Canvas {
                     let row = (y * self.width) as usize;
                     let start_idx = row + start_x as usize;
                     let end_idx = row + end_x as usize;
-                    self.buffer[start_idx..=end_idx].iter().for_each(|v| v.store(color.to_argb_u32(), Ordering::Relaxed));
+                    self.buffer[start_idx..=end_idx].iter_mut().for_each(|v| v.set(color.to_argb_u32()));
                 }
             }
         };
@@ -302,8 +340,8 @@ impl Canvas {
 
         let mut buffer = Vec::with_capacity(self.buffer.len() * 4);
 
-        for atom in &self.buffer {
-            let color = RGBA::from_argb_u32(atom.load(Ordering::Relaxed));
+        for value in &self.buffer {
+            let color = RGBA::from_argb_u32(value.get());
             buffer.extend_from_slice(&[color.r, color.g, color.b, color.a]);
         }
 

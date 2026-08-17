@@ -5,8 +5,9 @@ pub mod viewer;
 pub mod settings;
 pub mod controller;
 pub mod renderer;
+pub mod slider;
 
-
+use std::sync::atomic::AtomicU32;
 use minifb::{Key, MouseButton, MouseMode, Scale, ScaleMode, Window, WindowOptions};
 use base::{RGBA};
 use canvas::Canvas;
@@ -18,7 +19,7 @@ const HEIGHT: usize = 1080;
 
 fn main() {
 
-    let mut canvas = Canvas::new(WIDTH, HEIGHT);
+    let mut canvas = Canvas::<AtomicU32>::new(WIDTH, HEIGHT);
 
     let mut window = Window::new(
         "Test - ESC to exit",
@@ -140,7 +141,7 @@ fn main() {
 
         controller::process_controls(&mut config, &mut camera, &keys);
 
-        canvas.clear(RGBA::new());
+        canvas.clear(RGBA::black());
         renderer.render(&mut canvas, &camera);
         window.update_with_buffer(canvas.unsafe_slice(), canvas.width as usize, canvas.height as usize).unwrap();
     }
