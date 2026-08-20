@@ -36,22 +36,22 @@ struct SettingWindow {
 
 impl SettingWindow {
     fn new() -> Self {
-        let w = 1000;
-        let h = 1000;
+        let w = 700;
+        let h = 950;
 
         let canvas: Canvas<Cell<u32>> = Canvas::new(w, h);
 
         let slider_size = Vec2i(500, 100);
 
         let mut background_slider = ColorSlider::new(
-            Vec2i(100, 100),
+            Vec2i(100, 50),
             slider_size,
         );
 
         background_slider.a.slider_offset = slider_size.0;
 
         let mut outline_slider = ColorSlider::new(
-            Vec2i(100, 100 + slider_size.1 * 4 + 50),
+            Vec2i(100, 50 + slider_size.1 * 4 + 50),
             slider_size,
         );
 

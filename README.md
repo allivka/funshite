@@ -52,3 +52,4 @@ Funshite also allows to save current view into a PNG image.
 ### Period - increase outline thickness
 ### F - save the view as PNG
 ### H - reset camera position
+### G - open not very convenient coloring menu
