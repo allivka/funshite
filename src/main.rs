@@ -65,6 +65,7 @@ fn main() {
         polygon_outline_thickness: 1,
         fov_degrees: 60.0,
         close_visibility_distance: 0.1,
+        far_visibility_distance: f32::MAX,
         index_pair_buffer: Vec::new(),
         focal_length: 0.0,
     }.init(&canvas);
@@ -85,6 +86,10 @@ fn main() {
 
         if window.is_key_down(Key::PageDown) {
             config.set_speed_factor((config.speed_factor - settings::DEFAULT_SPEED_FACTOR_ADDITION).max(0.0));
+        }
+
+        if window.is_key_down(Key::H) {
+            camera = viewer::Viewer::new(Vec3d(0.0, 0.0, 0.0));
         }
 
         if window.is_key_down(Key::F) {

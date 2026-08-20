@@ -17,6 +17,7 @@ pub struct Renderer {
     pub polygon_outline_color: RGBA,
     pub fov_degrees: f32,
     pub close_visibility_distance: f32,
+    pub far_visibility_distance: f32,
     pub focal_length: f32,
 
     // 0 - object idx, 1 - first vertex idx in the object buffer, 2 - second vertex idx in the object buffer
@@ -121,6 +122,10 @@ impl Renderer {
             );
 
             if v1.2 >= -self.close_visibility_distance as f64 || v2.2 >= -self.close_visibility_distance as f64 {
+                return;
+            }
+
+            if v1.2 <= -self.far_visibility_distance as f64 || v2.2 <= -self.far_visibility_distance as f64 {
                 return;
             }
 
