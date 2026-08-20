@@ -78,16 +78,6 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn clear(&mut self, color: RGBA) {
-        let raw_slice: &mut [u32] = unsafe {
-            slice::from_raw_parts_mut(
-                self.buffer.as_mut_ptr() as *mut u32,
-                self.buffer.len(),
-            )
-        };
-        raw_slice.fill(color.to_argb_u32());
-    }
-
     pub fn translate_centered_to_standard(&self, pos: Vec2i) -> Vec2i {
         Vec2i(
             pos.0 + self.width / 2,
@@ -357,4 +347,22 @@ impl<T: CBF> Canvas<T> {
         Ok(())
     }
 
+}
+
+impl Canvas<AtomicU32> {
+    pub fn clear(&mut self, color: RGBA) {
+        let raw_slice: &mut [u32] = unsafe {
+            slice::from_raw_parts_mut(
+                self.buffer.as_mut_ptr() as *mut u32,
+                self.buffer.len(),
+            )
+        };
+        raw_slice.fill(color.to_argb_u32());
+    }
+}
+
+impl Canvas<Cell<u32>> {
+    pub fn clear(&mut self, color: RGBA) {
+        self.buffer.iter_mut().for_each(|c| *c = Cell::new(color.to_argb_u32()))
+    }
 }

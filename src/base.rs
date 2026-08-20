@@ -127,13 +127,21 @@ pub struct RGBA {
 
 impl RGBA {
 
-    pub fn from_argb_u32(n: u32) -> RGBA {
+    pub const fn from_argb_u32(n: u32) -> RGBA {
         RGBA {
             r: (0b1111_1111 & (n >> 16)) as u8,
             g: (0b1111_1111 & (n >> 8)) as u8,
             b: (0b1111_1111 & (n >> 0)) as u8,
             a: (0b1111_1111 & (n >> 24)) as u8,
         }
+    }
+
+    pub const fn new(r: u8, g: u8, b: u8) -> Self {
+        RGBA { r, g, b, a: 255 }
+    }
+
+    pub const fn new_alpha(r: u8, g: u8, b: u8, a: u8) -> Self {
+        RGBA { r, g, b, a }
     }
     
     pub const fn black() -> RGBA {
@@ -154,7 +162,7 @@ impl RGBA {
         }
     }
 
-    pub fn r(n: u8) -> RGBA {
+    pub const fn r(n: u8) -> RGBA {
         RGBA {
             r: n,
             g: 0,
@@ -163,7 +171,7 @@ impl RGBA {
         }
     }
 
-    pub fn g(n: u8) -> RGBA {
+    pub const fn g(n: u8) -> RGBA {
         RGBA {
             r: 0,
             g: n,
@@ -172,7 +180,7 @@ impl RGBA {
         }
     }
 
-    pub fn b(n: u8) -> RGBA {
+    pub const fn b(n: u8) -> RGBA {
         RGBA {
             r: 0,
             g: 0,
@@ -181,7 +189,7 @@ impl RGBA {
         }
     }
 
-    pub fn a(n: u8) -> RGBA {
+    pub const fn a(n: u8) -> RGBA {
         RGBA {
             r: 0,
             g: 0,
@@ -190,7 +198,7 @@ impl RGBA {
         }
     }
 
-    pub fn to_argb_u32(&self) -> u32 {
+    pub const fn to_argb_u32(&self) -> u32 {
         (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | (self.b as u32)
     }
 

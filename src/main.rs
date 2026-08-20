@@ -11,18 +11,110 @@ use std::sync::atomic::AtomicU32;
 use minifb::{Key, MouseButton, MouseMode, Scale, ScaleMode, Window, WindowOptions};
 use base::{RGBA};
 use canvas::Canvas;
-use crate::base::Vec3d;
+use crate::base::{Vec2i, Vec3d};
 use crate::renderer::Renderer;
+use std::cell::Cell;
+use crate::slider::{ColorSlider};
 
 const WIDTH: usize = 1920;
 const HEIGHT: usize = 1080;
+
+#[derive(Copy, Clone)]
+struct ColorsData {
+    background: RGBA,
+    outline: RGBA,
+}
+
+
+struct SettingWindow {
+    w: usize,
+    h: usize,
+    canvas: Canvas<Cell<u32>>,
+    background_slider: ColorSlider,
+    outline_slider: ColorSlider,
+}
+
+impl SettingWindow {
+    fn new() -> Self {
+        let w = 1000;
+        let h = 1000;
+
+        let canvas: Canvas<Cell<u32>> = Canvas::new(w, h);
+
+        let slider_size = Vec2i(500, 100);
+
+        let mut background_slider = ColorSlider::new(
+            Vec2i(100, 100),
+            slider_size,
+        );
+
+        background_slider.a.slider_offset = slider_size.0;
+
+        let mut outline_slider = ColorSlider::new(
+            Vec2i(100, 100 + slider_size.1 * 4 + 50),
+            slider_size,
+        );
+
+        outline_slider.g.slider_offset = slider_size.0;
+        outline_slider.a.slider_offset = slider_size.0;
+
+        Self {
+            w,
+            h,
+            canvas,
+            background_slider,
+            outline_slider
+        }
+    }
+
+    fn work(&mut self) -> ColorsData {
+
+        let mut window = Window::new(
+            "Settings - ESC to exit",
+            self.w,
+            self.h,
+            WindowOptions {
+                borderless: false,
+                title: true,
+                resize: false,
+                scale: Scale::X1,
+                scale_mode: ScaleMode::Center,
+                topmost: false,
+                transparency: false,
+                none: false,
+            },
+        ).unwrap_or_else(|e| {
+            panic!("{}", e);
+        });
+
+        window.set_target_fps(60);
+
+        while window.is_open() && !window.is_key_down(Key::Escape) {
+            self.background_slider.update(&window);
+            self.outline_slider.update(&window);
+
+            self.canvas.clear(RGBA::white());
+
+            self.background_slider.draw(&self.canvas);
+            self.outline_slider.draw(&self.canvas);
+
+            window.update_with_buffer(self.canvas.unsafe_slice(), self.w, self.h).unwrap();
+
+        };
+
+        ColorsData {
+            background: self.background_slider.calc_color(),
+            outline: self.outline_slider.calc_color(),
+        }
+    }
+}
 
 fn main() {
 
     let mut canvas = Canvas::<AtomicU32>::new(WIDTH, HEIGHT);
 
     let mut window = Window::new(
-        "Test - ESC to exit",
+        "Funshite - ESC to exit",
         WIDTH,
         HEIGHT,
         WindowOptions {
@@ -70,6 +162,10 @@ fn main() {
         focal_length: 0.0,
     }.init(&canvas);
 
+    let mut background_color = RGBA::black();
+
+    let mut settings_window = SettingWindow::new();
+
     let mut mouse_pos_prev: (f32, f32) = (0.0, 0.0);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -101,6 +197,12 @@ fn main() {
                     }
                 }
             }
+        }
+
+        if window.is_key_released(Key::G) {
+            let colors = settings_window.work();
+            renderer.polygon_outline_color = colors.outline;
+            background_color = colors.background;
         }
 
         if window.is_key_down(Key::Comma) {
@@ -146,7 +248,7 @@ fn main() {
 
         controller::process_controls(&mut config, &mut camera, &keys);
 
-        canvas.clear(RGBA::black());
+        canvas.clear(background_color);
         renderer.render(&mut canvas, &camera);
         window.update_with_buffer(canvas.unsafe_slice(), canvas.width as usize, canvas.height as usize).unwrap();
     }
