@@ -89,7 +89,7 @@ impl SettingWindow {
 
         window.set_target_fps(60);
 
-        while window.is_open() && !window.is_key_down(Key::Escape) {
+        while window.is_open() && !window.is_key_down(Key::Escape) && !window.is_key_down(Key::G) {
             self.background_slider.update(&window);
             self.outline_slider.update(&window);
 
