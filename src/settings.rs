@@ -11,6 +11,7 @@ pub const DEFAULT_SPEED_FACTOR_ADDITION: f64 = 0.1;
 pub struct Settings {
     pub keys: HashMap<Key, Motion>,
     pub speed_factor: f64,
+    pub model_speed_scale: f64,
     pub rotation_matrices: [[[f64; 3]; 3]; 6],
 }
 
@@ -32,6 +33,7 @@ impl Settings {
         Settings {
             keys: HashMap::new(),
             speed_factor: 1.0,
+            model_speed_scale: 1.0,
             rotation_matrices: [base::I3X3; 6],
         }
     }
@@ -139,5 +141,4 @@ impl Settings {
     }
 
 }
-
 

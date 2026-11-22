@@ -8,16 +8,19 @@ pub mod renderer;
 pub mod slider;
 
 use std::sync::atomic::AtomicU32;
+use std::time::{Duration, Instant};
 use minifb::{Key, MouseButton, MouseMode, Scale, ScaleMode, Window, WindowOptions};
 use base::{RGBA};
 use canvas::Canvas;
 use crate::base::{Vec2i, Vec3d};
 use crate::renderer::Renderer;
 use std::cell::Cell;
-use crate::slider::{ColorSlider};
+use crate::slider::ColorSlider;
 
 const WIDTH: usize = 1920;
 const HEIGHT: usize = 1080;
+const DEFAULT_FOV_DEGREES: f64 = 60.0;
+const MODEL_SPEED_SCALE_COEFFICIENT: f64 = 1.3;
 
 #[derive(Copy, Clone)]
 struct ColorsData {
@@ -59,6 +62,8 @@ impl SettingWindow {
 
         outline_slider.g.slider_offset = slider_size.0;
         outline_slider.a.slider_offset = slider_size.0;
+        background_slider.set_reset_to_current();
+        outline_slider.set_reset_to_current();
 
         Self {
             w,
@@ -98,7 +103,6 @@ impl SettingWindow {
         {
             self.background_slider.update(&window);
             self.outline_slider.update(&window);
-
             self.canvas.clear(RGBA::white());
 
             self.background_slider.draw(&self.canvas);
@@ -114,6 +118,7 @@ impl SettingWindow {
             outline: self.outline_slider.calc_color(),
         }
     }
+
 }
 
 fn main() {
@@ -149,8 +154,6 @@ fn main() {
 
     let mut config = settings::Settings::default_settings();
 
-    let mut camera = viewer::Viewer::new(Vec3d(0.0, 0.0, 0.0));
-
     let objects;
 
     if let Some(file_path) = rfd::FileDialog::new().add_filter("OBJ file", &["obj"]).pick_file() {
@@ -164,16 +167,22 @@ fn main() {
         return;
     };
 
+    config.model_speed_scale = model_size_scale(&objects);
+    let mut model_polygon_count = polygon_count(&objects);
+    let mut camera_start_position = model_view_position(&objects, DEFAULT_FOV_DEGREES);
+    let mut camera = viewer::Viewer::new(camera_start_position);
+
     let mut renderer = Renderer {
         objects,
         polygon_outline_color: RGBA::g(255),
         polygon_outline_thickness: 1,
-        fov_degrees: 60.0,
+        fov_degrees: DEFAULT_FOV_DEGREES as f32,
         close_visibility_distance: 0.1,
         far_visibility_distance: f32::MAX,
         index_pair_buffer: Vec::new(),
         focal_length: 0.0,
     }.init(&canvas);
+    let mut model_loaded_at = Instant::now();
 
     let mut background_color = RGBA::black();
 
@@ -198,7 +207,7 @@ fn main() {
         }
 
         if window.is_key_down(Key::H) {
-            camera = viewer::Viewer::new(Vec3d(0.0, 0.0, 0.0));
+            camera = viewer::Viewer::new(camera_start_position);
         }
 
         if window.is_key_down(Key::F) {
@@ -210,6 +219,34 @@ fn main() {
                     }
                 }
             }
+        }
+
+        if window.is_key_released(Key::L) {
+            if let Some(file_path) =
+                rfd::FileDialog::new().add_filter("OBJ file", &["obj"]).pick_file()
+            {
+                match object::parse_file(file_path.as_path()) {
+                    Ok(objects) => {
+                        config.model_speed_scale = model_size_scale(&objects);
+                        model_polygon_count = polygon_count(&objects);
+                        camera_start_position =
+                            model_view_position(&objects, DEFAULT_FOV_DEGREES);
+                        camera = viewer::Viewer::new(camera_start_position);
+                        renderer.objects = objects;
+                        renderer.index_pair_buffer.clear();
+                        renderer.initialize_index_pair_buffer();
+                        model_loaded_at = Instant::now();
+                    }
+                    Err(error) => {
+                        eprintln!("Failed parsing OBJ file: {error}");
+                    }
+                }
+            }
+            wait_for_keys_release(&mut window);
+            mouse_pos_prev = window
+                .get_mouse_pos(MouseMode::Pass)
+                .unwrap_or(mouse_pos_prev);
+            continue;
         }
 
         if window.is_key_released(Key::G) {
@@ -273,10 +310,127 @@ fn main() {
 
         canvas.clear(background_color);
         renderer.render(&mut canvas, &camera);
+        if model_loaded_at.elapsed() < Duration::from_secs(5) {
+            let status_text = format!(
+                "{} POLYGONS MODEL LOADED",
+                format_count_with_underscores(model_polygon_count)
+            );
+            let status_scale = 2;
+            let status_width = status_text.chars().count() as isize * 6 * status_scale;
+            draw_guide_text(
+                &canvas,
+                Vec2i(canvas.width - status_width - 32, 24),
+                &status_text,
+                status_scale,
+                renderer.polygon_outline_color,
+            );
+        }
         window.update_with_buffer(canvas.unsafe_slice(), canvas.width as usize, canvas.height as usize).unwrap();
     }
 
 
+}
+
+fn polygon_count(objects: &[object::Object]) -> usize {
+    objects.iter().map(|object| object.faces.len()).sum()
+}
+
+fn format_count_with_underscores(count: usize) -> String {
+    let digits = count.to_string();
+    let mut formatted = String::with_capacity(digits.len() + digits.len() / 3);
+
+    for (index, digit) in digits.chars().enumerate() {
+        if index > 0 && (digits.len() - index) % 3 == 0 {
+            formatted.push('_');
+        }
+        formatted.push(digit);
+    }
+
+    formatted
+}
+
+fn model_size_scale(objects: &[object::Object]) -> f64 {
+    let mut min_x = f64::INFINITY;
+    let mut max_x = f64::NEG_INFINITY;
+    let mut min_y = f64::INFINITY;
+    let mut max_y = f64::NEG_INFINITY;
+    let mut min_z = f64::INFINITY;
+    let mut max_z = f64::NEG_INFINITY;
+
+    for vertex in objects.iter().flat_map(|object| &object.vertices) {
+        if !vertex.0.is_finite() || !vertex.1.is_finite() || !vertex.2.is_finite() {
+            continue;
+        }
+
+        min_x = min_x.min(vertex.0);
+        max_x = max_x.max(vertex.0);
+        min_y = min_y.min(vertex.1);
+        max_y = max_y.max(vertex.1);
+        min_z = min_z.min(vertex.2);
+        max_z = max_z.max(vertex.2);
+    }
+
+    if !min_x.is_finite() {
+        return 1.0;
+    }
+
+    let size = (max_x - min_x)
+        .max(max_y - min_y)
+        .max(max_z - min_z);
+    if size > 0.0 {
+        size / MODEL_SPEED_SCALE_COEFFICIENT
+    } else {
+        1.0
+    }
+}
+
+fn model_view_position(objects: &[object::Object], fov_degrees: f64) -> Vec3d {
+    let mut vertex_count = 0usize;
+    let mut center_x = 0.0;
+    let mut center_y = 0.0;
+    let mut center_z = 0.0;
+    let mut min_x = f64::INFINITY;
+    let mut max_x = f64::NEG_INFINITY;
+    let mut min_y = f64::INFINITY;
+    let mut max_y = f64::NEG_INFINITY;
+    let mut min_z = f64::INFINITY;
+    let mut max_z = f64::NEG_INFINITY;
+
+    for vertex in objects.iter().flat_map(|object| &object.vertices) {
+        if !vertex.0.is_finite() || !vertex.1.is_finite() || !vertex.2.is_finite() {
+            continue;
+        }
+
+        vertex_count += 1;
+        center_x += vertex.0;
+        center_y += vertex.1;
+        center_z += vertex.2;
+        min_x = min_x.min(vertex.0);
+        max_x = max_x.max(vertex.0);
+        min_y = min_y.min(vertex.1);
+        max_y = max_y.max(vertex.1);
+        min_z = min_z.min(vertex.2);
+        max_z = max_z.max(vertex.2);
+    }
+
+    if vertex_count == 0 {
+        return Vec3d(0.0, 0.0, 0.0);
+    }
+
+    center_x /= vertex_count as f64;
+    center_y /= vertex_count as f64;
+    center_z /= vertex_count as f64;
+
+    let half_width = (max_x - center_x).abs().max((min_x - center_x).abs());
+    let half_height = (max_y - center_y).abs().max((min_y - center_y).abs());
+    let half_depth = (max_z - center_z).abs().max((min_z - center_z).abs());
+    let half_fov = (fov_degrees.to_radians() / 2.0).tan();
+    let aspect_ratio = WIDTH as f64 / HEIGHT as f64;
+    let distance = half_depth
+        + (half_width / half_fov).max(half_height / (half_fov / aspect_ratio)) * 1.2
+        + 0.1;
+
+    Vec3d(center_x, center_y, center_z + distance)
 }
 
 fn wait_for_keys_release(window: &mut Window) {
@@ -312,6 +466,7 @@ fn show_keybinds_guide(window: &mut Window, canvas: &mut Canvas<AtomicU32>) {
         "R               Sync rotation speed with movement speed",
         "COMMA / PERIOD  Decrease / increase outline thickness",
         "F               Save the view as PNG",
+        "L               Load a different OBJ model",
         "H               Reset camera position",
         "G               Open the color settings window",
         "F1              Show this guide again",
@@ -400,6 +555,7 @@ fn draw_guide_text(
             '/' => [0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000],
             '+' => [0b00000, 0b00100, 0b00100, 0b11111, 0b00100, 0b00100, 0b00000],
             '-' => [0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000],
+            '_' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b11111],
             '.' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00110, 0b00110],
             ',' => [0b00000, 0b00000, 0b00000, 0b00000, 0b00110, 0b00110, 0b00100],
             _ => [0; 7],

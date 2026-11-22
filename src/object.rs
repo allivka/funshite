@@ -14,53 +14,41 @@ pub struct VertexProps {
 }
 
 impl VertexProps {
-    pub fn parse(s: &str, v_off: usize, t_off: usize, n_off: usize) -> Option<Self> {
+    pub fn parse(
+        s: &str,
+        vertex_count: usize,
+        texture_count: usize,
+        normal_count: usize,
+    ) -> Option<Self> {
         let mut parts = s.split('/');
 
-        let v_str = parts.next()?;
-        let v_idx: isize = v_str.parse().ok()?;
-
-        if v_idx <= 0 {
-            return None;
-        }
-
-        let global_idx = (v_idx - 1) as usize;
-        let vertex = global_idx.checked_sub(v_off)?;
-
-
-        let texture = match parts.next() {
-            Some("") | None => None,
-            Some(t_str) => {
-                let t_idx: isize = t_str.parse().ok()?;
-
-                if t_idx > 0 {
-                    let global_idx = (t_idx - 1) as usize;
-                    global_idx.checked_sub(t_off)
-
-                } else {
-                    None
-                }
-            }
-        };
-
-        let normal = match parts.next() {
-            Some("") | None => None,
-            Some(n_str) => {
-                let n_idx: isize = n_str.parse().ok()?;
-
-                if n_idx > 0 {
-                    let global_idx = (n_idx - 1) as usize;
-                    global_idx.checked_sub(n_off)
-
-                } else {
-                    None
-                }
-            }
-        };
+        let vertex = resolve_obj_index(parts.next()?, vertex_count)?;
+        let texture = parse_optional_obj_index(parts.next(), texture_count)?;
+        let normal = parse_optional_obj_index(parts.next(), normal_count)?;
 
         Some(VertexProps {
             vertex, texture, normal
         })
+    }
+}
+
+fn resolve_obj_index(index: &str, item_count: usize) -> Option<usize> {
+    let index = index.parse::<isize>().ok()?;
+    let resolved = if index > 0 {
+        usize::try_from(index - 1).ok()?
+    } else if index < 0 {
+        item_count.checked_sub(index.unsigned_abs())?
+    } else {
+        return None;
+    };
+
+    (resolved < item_count).then_some(resolved)
+}
+
+fn parse_optional_obj_index(index: Option<&str>, item_count: usize) -> Option<Option<usize>> {
+    match index {
+        Some("") | None => Some(None),
+        Some(index) => Some(Some(resolve_obj_index(index, item_count)?)),
     }
 }
 
@@ -83,7 +71,7 @@ impl Object {
         }
     }
 
-    pub fn parse_line(&mut self, line: &str, v_off: usize, vt_off: usize, vn_off: usize) {
+    pub fn parse_line(&mut self, line: &str) {
         let mut tokens = line.split_whitespace();
         let keyword = match tokens.next() {
             Some(k) => k,
@@ -113,10 +101,17 @@ impl Object {
                 }
             }
             "f" => {
-                let face: Vec<VertexProps> = tokens
-                    .filter_map(|s| VertexProps::parse(s, v_off, vt_off, vn_off))
+                let face: Option<Vec<VertexProps>> = tokens
+                    .map(|s| {
+                        VertexProps::parse(
+                            s,
+                            self.vertices.len(),
+                            self.texture_coords.len(),
+                            self.normals.len(),
+                        )
+                    })
                     .collect();
-                if !face.is_empty() {
+                if let Some(face) = face.filter(|face| face.len() >= 2) {
                     self.faces.push(face);
                 }
             }
@@ -128,10 +123,6 @@ impl Object {
 pub fn parse_file(path: &Path) -> Result<Vec<Object>, std::io::Error> {
     let file = File::open(path)?;
     let mut objects: Vec<Object> = Vec::new();
-
-    let mut v_offset = 0usize;
-    let mut vt_offset = 0usize;
-    let mut vn_offset = 0usize;
 
     for line in BufReader::new(file).lines() {
         let line = line?;
@@ -149,25 +140,74 @@ pub fn parse_file(path: &Path) -> Result<Vec<Object>, std::io::Error> {
 
         match keyword {
             "o" | "g" => {
-
-                if let Some(last_obj) = objects.last() {
-                    v_offset += last_obj.vertices.len();
-                    vt_offset += last_obj.texture_coords.len();
-                    vn_offset += last_obj.normals.len();
-                }
-
                 let name = tokens.collect::<Vec<_>>().join(" ");
-                objects.push(Object::new(if name.is_empty() { "object" } else { &name }));
+                if objects.is_empty() {
+                    objects.push(Object::new(if name.is_empty() { "object" } else { &name }));
+                }
             }
             "v" | "vt" | "vn" | "f" => {
                 if objects.is_empty() {
                     objects.push(Object::new("untitled_object"));
                 }
-                objects.last_mut().unwrap().parse_line(trimmed, v_offset, vt_offset, vn_offset);
+                objects.last_mut().unwrap().parse_line(trimmed);
             }
             _ => continue,
         }
     }
 
     Ok(objects)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn resolves_negative_face_indices_relative_to_current_vertices() {
+        let mut object = Object::new("test");
+        object.parse_line("v 0 0 0");
+        object.parse_line("v 1 0 0");
+        object.parse_line("v 0 1 0");
+        object.parse_line("f -3 -2 -1");
+
+        assert_eq!(object.faces.len(), 1);
+        assert_eq!(
+            object.faces[0].iter().map(|vertex| vertex.vertex).collect::<Vec<_>>(),
+            vec![0, 1, 2],
+        );
+    }
+
+    #[test]
+    fn resolves_global_vertex_indices_across_object_groups() {
+        let path = std::env::temp_dir().join(format!(
+            "funshite_obj_groups_{}.obj",
+            std::process::id(),
+        ));
+        fs::write(
+            &path,
+            "v 0 0 0\nv 1 0 0\nv 0 1 0\no first\ng second\nf 1 2 3\n",
+        )
+        .unwrap();
+
+        let objects = parse_file(&path).unwrap();
+        fs::remove_file(path).unwrap();
+
+        assert_eq!(objects.len(), 1);
+        assert_eq!(objects[0].faces.len(), 1);
+        assert_eq!(
+            objects[0].faces[0].iter().map(|vertex| vertex.vertex).collect::<Vec<_>>(),
+            vec![0, 1, 2],
+        );
+    }
+
+    #[test]
+    fn rejects_a_face_with_an_invalid_vertex_reference() {
+        let mut object = Object::new("test");
+        object.parse_line("v 0 0 0");
+        object.parse_line("v 1 0 0");
+        object.parse_line("f 1 2 3");
+
+        assert!(object.faces.is_empty());
+    }
 }

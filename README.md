@@ -51,6 +51,7 @@ Funshite also allows to save current view into a PNG image.
 ### Comma - decrease outline thickness
 ### Period - increase outline thickness
 ### F - save the view as PNG
+### L - load a different OBJ model (keeps current colors)
 ### H - reset camera position
 ### G - open/close not very convenient coloring menu
 ### F1 - show the controls guide (also shown when the app starts)

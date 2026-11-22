@@ -129,18 +129,95 @@ impl Renderer {
                 return;
             }
 
-            canvas.draw_line_thick(
-                Vec2i(
-                    (canvas.width as f64 / 2.0 + (v1.0 * self.focal_length as f64) / -v1.2) as isize,
-                    (canvas.height as f64 / 2.0 - (v1.1 * self.focal_length as f64) / -v1.2) as isize,
-                ),
-                Vec2i(
-                    (canvas.width as f64 / 2.0 + (v2.0 * self.focal_length as f64) / -v2.2) as isize,
-                    (canvas.height as f64 / 2.0 - (v2.1 * self.focal_length as f64) / -v2.2) as isize,
-                ),
-                self.polygon_outline_color,
-                self.polygon_outline_thickness,
+            let start = (
+                canvas.width as f64 / 2.0
+                    + (v1.0 * self.focal_length as f64) / -v1.2,
+                canvas.height as f64 / 2.0
+                    - (v1.1 * self.focal_length as f64) / -v1.2,
             );
+            let end = (
+                canvas.width as f64 / 2.0
+                    + (v2.0 * self.focal_length as f64) / -v2.2,
+                canvas.height as f64 / 2.0
+                    - (v2.1 * self.focal_length as f64) / -v2.2,
+            );
+
+            if let Some((start, end)) =
+                clip_line_to_screen(start, end, canvas.width, canvas.height)
+            {
+                canvas.draw_line_thick(
+                    start,
+                    end,
+                    self.polygon_outline_color,
+                    self.polygon_outline_thickness,
+                );
+            }
         });
     }
+}
+
+fn clip_line_to_screen(
+    start: (f64, f64),
+    end: (f64, f64),
+    width: isize,
+    height: isize,
+) -> Option<(Vec2i, Vec2i)> {
+    if width <= 0 || height <= 0 {
+        return None;
+    }
+
+    let (x0, y0) = start;
+    let (x1, y1) = end;
+    if !x0.is_finite() || !y0.is_finite() || !x1.is_finite() || !y1.is_finite() {
+        return None;
+    }
+
+    let dx = x1 - x0;
+    let dy = y1 - y0;
+    if !dx.is_finite() || !dy.is_finite() {
+        return None;
+    }
+
+    let mut t_enter: f64 = 0.0;
+    let mut t_exit: f64 = 1.0;
+    let right = (width - 1) as f64;
+    let bottom = (height - 1) as f64;
+
+    for (p, q) in [
+        (-dx, x0),
+        (dx, right - x0),
+        (-dy, y0),
+        (dy, bottom - y0),
+    ] {
+        if p == 0.0 {
+            if q < 0.0 {
+                return None;
+            }
+            continue;
+        }
+
+        let t = q / p;
+        if p < 0.0 {
+            t_enter = t_enter.max(t);
+        } else {
+            t_exit = t_exit.min(t);
+        }
+        if t_enter > t_exit {
+            return None;
+        }
+    }
+
+    let clipped_start = (
+        (x0 + t_enter * dx).clamp(0.0, right) as isize,
+        (y0 + t_enter * dy).clamp(0.0, bottom) as isize,
+    );
+    let clipped_end = (
+        (x0 + t_exit * dx).clamp(0.0, right) as isize,
+        (y0 + t_exit * dy).clamp(0.0, bottom) as isize,
+    );
+
+    Some((
+        Vec2i(clipped_start.0, clipped_start.1),
+        Vec2i(clipped_end.0, clipped_end.1),
+    ))
 }

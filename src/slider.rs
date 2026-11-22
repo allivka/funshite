@@ -17,6 +17,8 @@ pub const DEFAULT_FILLER_COLOR: RGBA = RGBA::new(105, 105, 105);
 const ARROW_SIZE: isize = 20;
 const ARROW_GAP: isize = 4;
 const SLIDER_GAP: isize = 8;
+const RESET_BUTTON_SIZE: Vec2i = Vec2i(72, 24);
+const RESET_BUTTON_TOP_GAP: isize = 38;
 const ARROW_INITIAL_REPEAT_RATE: f64 = 4.0;
 const ARROW_REPEAT_ACCELERATION: f64 = 24.0;
 const ARROW_MAX_REPEAT_RATE: f64 = 48.0;
@@ -144,6 +146,7 @@ pub struct ColorSlider {
     pub b: Slider<i32, DefaultShader>,
     pub a: Slider<i32, DefaultShader>,
     arrow_hold: Option<ArrowHold>,
+    reset_offsets: [isize; 4],
 }
 
 struct ArrowHold {
@@ -204,6 +207,8 @@ impl ColorSlider {
                 ..DefaultShader::default()
             },
         );
+        let mut a = a;
+        a.slider_offset = size.0;
 
         ColorSlider {
             name: name.to_owned(),
@@ -212,6 +217,7 @@ impl ColorSlider {
             b,
             a,
             arrow_hold: None,
+            reset_offsets: [0, 0, 0, size.0],
         }
 
     }
@@ -232,6 +238,11 @@ impl ColorSlider {
             return;
         };
         let mouse = Vec2i(mouse_x as isize, mouse_y as isize);
+        if point_in_rect(mouse, reset_button_position(&self.r), RESET_BUTTON_SIZE) {
+            self.reset();
+            return;
+        }
+
         let channel_and_direction = [
             (&self.r, 0),
             (&self.g, 1),
@@ -310,6 +321,24 @@ impl ColorSlider {
             RGBA::new(color.r, color.g, color.b),
         );
         canvas.draw_rect(swatch_pos, Vec2i(19, 19), RGBA::black(), 1);
+        draw_reset_button(canvas, reset_button_position(&self.r));
+    }
+
+    pub fn set_reset_to_current(&mut self) {
+        self.reset_offsets = [
+            self.r.slider_offset,
+            self.g.slider_offset,
+            self.b.slider_offset,
+            self.a.slider_offset,
+        ];
+    }
+
+    fn reset(&mut self) {
+        self.r.slider_offset = self.reset_offsets[0];
+        self.g.slider_offset = self.reset_offsets[1];
+        self.b.slider_offset = self.reset_offsets[2];
+        self.a.slider_offset = self.reset_offsets[3];
+        self.arrow_hold = None;
     }
 
     pub fn calc_color(&self) -> RGBA {
@@ -320,6 +349,38 @@ impl ColorSlider {
             a: self.a.calc_value() as u8
         }
     }
+}
+
+fn reset_button_position(slider: &Slider<i32, DefaultShader>) -> Vec2i {
+    Vec2i(
+        slider.pos.0 + slider.size.0 - RESET_BUTTON_SIZE.0 - 8,
+        slider.pos.1 - RESET_BUTTON_TOP_GAP,
+    )
+}
+
+fn point_in_rect(point: Vec2i, pos: Vec2i, size: Vec2i) -> bool {
+    point.0 >= pos.0
+        && point.0 < pos.0 + size.0
+        && point.1 >= pos.1
+        && point.1 < pos.1 + size.1
+}
+
+fn draw_reset_button<R: CBF>(canvas: &Canvas<R>, pos: Vec2i) {
+    canvas.fill_rect(
+        pos,
+        Vec2i(
+            pos.0 + RESET_BUTTON_SIZE.0 - 1,
+            pos.1 + RESET_BUTTON_SIZE.1 - 1,
+        ),
+        RGBA::new(220, 220, 220),
+    );
+    canvas.draw_rect(
+        pos,
+        Vec2i(RESET_BUTTON_SIZE.0 - 1, RESET_BUTTON_SIZE.1 - 1),
+        RGBA::black(),
+        1,
+    );
+    draw_text(canvas, Vec2i(pos.0 + 16, pos.1 + 8), "RESET", RGBA::black());
 }
 
 fn arrow_button_positions(slider: &Slider<i32, DefaultShader>) -> (Vec2i, Vec2i) {
@@ -413,7 +474,7 @@ fn draw_arrow_button<R: CBF>(canvas: &Canvas<R>, pos: Vec2i, color: RGBA, points
     }
 }
 
-fn draw_text<R: CBF>(canvas: &Canvas<R>, pos: Vec2i, text: &str, color: RGBA) {
+pub(crate) fn draw_text<R: CBF>(canvas: &Canvas<R>, pos: Vec2i, text: &str, color: RGBA) {
     for (index, character) in text.chars().enumerate() {
         let rows = match character {
             'A' => [0b010, 0b101, 0b111, 0b101, 0b101],
@@ -431,6 +492,7 @@ fn draw_text<R: CBF>(canvas: &Canvas<R>, pos: Vec2i, text: &str, color: RGBA) {
             'O' => [0b010, 0b101, 0b101, 0b101, 0b010],
             'P' => [0b110, 0b101, 0b110, 0b100, 0b100],
             'R' => [0b110, 0b101, 0b110, 0b101, 0b101],
+            'S' => [0b011, 0b100, 0b010, 0b001, 0b110],
             'T' => [0b111, 0b010, 0b010, 0b010, 0b010],
             'U' => [0b101, 0b101, 0b101, 0b101, 0b111],
             'W' => [0b101, 0b101, 0b111, 0b111, 0b101],
