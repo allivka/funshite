@@ -53,3 +53,7 @@ Funshite also allows to save current view into a PNG image.
 ### F - save the view as PNG
 ### H - reset camera position
 ### G - open/close not very convenient coloring menu
+### F1 - show the controls guide (also shown when the app starts)
+
+The controls guide pauses camera input and real-time rendering while it is open.
+Press Enter, Escape, or F1 to close it and resume.
