@@ -43,16 +43,18 @@ impl SettingWindow {
 
         let slider_size = Vec2i(500, 100);
 
-        let mut background_slider = ColorSlider::new(
+        let mut background_slider = ColorSlider::with_name(
             Vec2i(100, 50),
             slider_size,
+            "BACKGROUND COLOR",
         );
 
         background_slider.a.slider_offset = slider_size.0;
 
-        let mut outline_slider = ColorSlider::new(
+        let mut outline_slider = ColorSlider::with_name(
             Vec2i(100, 50 + slider_size.1 * 4 + 50),
             slider_size,
+            "OUTLINE COLOR",
         );
 
         outline_slider.g.slider_offset = slider_size.0;
@@ -67,7 +69,7 @@ impl SettingWindow {
         }
     }
 
-    fn work(&mut self) -> ColorsData {
+    fn work(&mut self, main_window: &mut Window) -> ColorsData {
 
         let mut window = Window::new(
             "Settings - ESC to exit",
@@ -89,7 +91,11 @@ impl SettingWindow {
 
         window.set_target_fps(60);
 
-        while window.is_open() && !window.is_key_down(Key::Escape) && !window.is_key_down(Key::G) {
+        while window.is_open()
+            && main_window.is_open()
+            && !window.is_key_down(Key::Escape)
+            && !window.is_key_down(Key::G)
+        {
             self.background_slider.update(&window);
             self.outline_slider.update(&window);
 
@@ -99,6 +105,7 @@ impl SettingWindow {
             self.outline_slider.draw(&self.canvas);
 
             window.update_with_buffer(self.canvas.unsafe_slice(), self.w, self.h).unwrap();
+            main_window.update();
 
         };
 
@@ -200,7 +207,7 @@ fn main() {
         }
 
         if window.is_key_released(Key::G) {
-            let colors = settings_window.work();
+            let colors = settings_window.work(&mut window);
             renderer.polygon_outline_color = colors.outline;
             background_color = colors.background;
         }
