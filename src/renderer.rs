@@ -13,7 +13,6 @@ pub struct VertexIdx {
 
 pub struct Renderer {
     pub objects: Vec<Object>,
-    pub polygon_outline_thickness: isize,
     pub polygon_outline_color: RGBA,
     pub fov_degrees: f32,
     pub close_visibility_distance: f32,
@@ -145,12 +144,7 @@ impl Renderer {
             if let Some((start, end)) =
                 clip_line_to_screen(start, end, canvas.width, canvas.height)
             {
-                canvas.draw_line_thick(
-                    start,
-                    end,
-                    self.polygon_outline_color,
-                    self.polygon_outline_thickness,
-                );
+                canvas.draw_line(start, end, self.polygon_outline_color);
             }
         });
     }

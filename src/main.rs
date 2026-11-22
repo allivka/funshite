@@ -175,7 +175,6 @@ fn main() {
     let mut renderer = Renderer {
         objects,
         polygon_outline_color: RGBA::g(255),
-        polygon_outline_thickness: 1,
         fov_degrees: DEFAULT_FOV_DEGREES as f32,
         close_visibility_distance: 0.1,
         far_visibility_distance: f32::MAX,
@@ -263,16 +262,6 @@ fn main() {
                 .get_mouse_pos(MouseMode::Pass)
                 .unwrap_or(mouse_pos_prev);
             continue;
-        }
-
-        if window.is_key_down(Key::Comma) {
-            if renderer.polygon_outline_thickness > 1 {
-                renderer.polygon_outline_thickness -= 1;
-            }
-        }
-
-        if window.is_key_down(Key::Period) {
-            renderer.polygon_outline_thickness += 1;
         }
 
         if window.is_key_down(Key::T) {
@@ -464,7 +453,6 @@ fn show_keybinds_guide(window: &mut Window, canvas: &mut Canvas<AtomicU32>) {
         "PAGE DOWN / WHEEL DOWN  Decrease movement speed",
         "T               Reset movement speed",
         "R               Sync rotation speed with movement speed",
-        "COMMA / PERIOD  Decrease / increase outline thickness",
         "F               Save the view as PNG",
         "L               Load a different OBJ model",
         "H               Reset camera position",

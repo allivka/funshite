@@ -48,8 +48,6 @@ Funshite also allows to save current view into a PNG image.
 ### R - sync rotation speed with motion speed
 ### 
 ### OTHERS:
-### Comma - decrease outline thickness
-### Period - increase outline thickness
 ### F - save the view as PNG
 ### L - load a different OBJ model (keeps current colors)
 ### H - reset camera position

@@ -160,38 +160,14 @@ impl<T: CBF> Canvas<T> {
         }
     }
 
-    pub fn draw_line_thick(&self, start: Vec2i, end: Vec2i, color: RGBA, thickness: isize) {
-        //TODO: make pixels to count for thickness actually perpendicular to the main line
-
-        if thickness < 1 {
-            return;
-        }
-
-        let mut shift: isize = 0;
-
-        for i in 1..=thickness {
-            self.draw_line(
-                Vec2i(start.0 + shift, start.1 + shift),
-                Vec2i(end.0 + shift, end.1 + shift),
-                color,
-            );
-
-            if i % 2 != 0 {
-                shift = shift.abs() + 1
-            } else {
-                shift = -shift;
-            }
-        }
+    pub fn draw_rect(&self, pos: Vec2i, size: Vec2i, color: RGBA) {
+        self.draw_line(pos, Vec2i(pos.0 + size.0, pos.1), color);
+        self.draw_line(pos, Vec2i(pos.0, pos.1 + size.1), color);
+        self.draw_line(Vec2i(pos.0 + size.0, pos.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color);
+        self.draw_line(Vec2i(pos.0, pos.1 + size.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color);
     }
 
-    pub fn draw_rect(&self, pos: Vec2i, size: Vec2i, color: RGBA, thickness: isize) {
-        self.draw_line_thick(pos, Vec2i(pos.0 + size.0, pos.1), color, thickness);
-        self.draw_line_thick(pos, Vec2i(pos.0, pos.1 + size.1), color, thickness);
-        self.draw_line_thick(Vec2i(pos.0 + size.0, pos.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
-        self.draw_line_thick( Vec2i(pos.0, pos.1 + size.1), Vec2i(pos.0 + size.0, pos.1 + size.1), color, thickness);
-    }
-
-    pub fn draw_polygon(&self, points: &Vec<Vec2i>,  color: RGBA, thickness: isize) {
+    pub fn draw_polygon(&self, points: &Vec<Vec2i>, color: RGBA) {
         if points.is_empty() {
             return;
         }
@@ -210,7 +186,7 @@ impl<T: CBF> Canvas<T> {
                 return;
             },
             2 => {
-                self.draw_line_thick(points[0], points[1], color, thickness);
+                self.draw_line(points[0], points[1], color);
                 return;
             }
 
@@ -218,10 +194,10 @@ impl<T: CBF> Canvas<T> {
         }
 
         for i in 0..points.len() - 1 {
-            self.draw_line_thick(points[i], points[i + 1], color, thickness);
+            self.draw_line(points[i], points[i + 1], color);
         }
 
-        self.draw_line_thick(points[0], points[points.len() - 1], color, thickness);
+        self.draw_line(points[0], points[points.len() - 1], color);
 
     }
 
@@ -310,21 +286,20 @@ impl<T: CBF> Canvas<T> {
         self.fill_polygon(&vec!{Vec2i(0, 300), Vec2i(300, 300), Vec2i(300, 450), Vec2i(450, 1000)}, RGBA { r: 255, g: 255, b: 0, a: 0 });
 
 
-        self.draw_line_thick(Vec2i(500, 100), Vec2i(800, 100), RGBA { r: 255, g: 0, b: 0, a: 0 }, 1);
-        self.draw_line_thick(Vec2i(500, 150), Vec2i(800, 150), RGBA { r: 0, g: 255, b: 0, a: 0 }, 3);
-        self.draw_line_thick(Vec2i(500, 200), Vec2i(800, 200), RGBA { r: 0, g: 0, b: 255, a: 0 }, 5);
+        self.draw_line(Vec2i(500, 100), Vec2i(800, 100), RGBA { r: 255, g: 0, b: 0, a: 0 });
+        self.draw_line(Vec2i(500, 150), Vec2i(800, 150), RGBA { r: 0, g: 255, b: 0, a: 0 });
+        self.draw_line(Vec2i(500, 200), Vec2i(800, 200), RGBA { r: 0, g: 0, b: 255, a: 0 });
+
+        self.draw_line(Vec2i(550, 100), Vec2i(550, 250), RGBA { r: 255, g: 255, b: 0, a: 0 });
 
 
-        self.draw_line_thick(Vec2i(550, 100), Vec2i(550, 250), RGBA { r: 255, g: 255, b: 0, a: 0 }, 2);
+        self.draw_line(Vec2i(600, 100), Vec2i(750, 250), RGBA { r: 255, g: 0, b: 255, a: 0 });
+        self.draw_line(Vec2i(750, 100), Vec2i(600, 250), RGBA { r: 0, g: 255, b: 255, a: 0 });
 
 
-        self.draw_line_thick(Vec2i(600, 100), Vec2i(750, 250), RGBA { r: 255, g: 0, b: 255, a: 0 }, 3);
-        self.draw_line_thick(Vec2i(750, 100), Vec2i(600, 250), RGBA { r: 0, g: 255, b: 255, a: 0 }, 2);
-
-
-        self.draw_rect(Vec2i(100, 400), Vec2i(200, 150), RGBA { r: 255, g: 100, b: 0, a: 0 }, 2);
-        self.draw_rect(Vec2i(350, 400), Vec2i(200, 150), RGBA { r: 100, g: 255, b: 0, a: 0 }, 3);
-        self.draw_rect(Vec2i(600, 400), Vec2i(200, 150), RGBA { r: 0, g: 100, b: 255, a: 0 }, 5);
+        self.draw_rect(Vec2i(100, 400), Vec2i(200, 150), RGBA { r: 255, g: 100, b: 0, a: 0 });
+        self.draw_rect(Vec2i(350, 400), Vec2i(200, 150), RGBA { r: 100, g: 255, b: 0, a: 0 });
+        self.draw_rect(Vec2i(600, 400), Vec2i(200, 150), RGBA { r: 0, g: 100, b: 255, a: 0 });
     }
 
     pub fn save_to_png(&self, path: &Path) -> std::io::Result<()> {

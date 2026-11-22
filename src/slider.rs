@@ -320,7 +320,7 @@ impl ColorSlider {
             Vec2i(swatch_pos.0 + 19, swatch_pos.1 + 19),
             RGBA::new(color.r, color.g, color.b),
         );
-        canvas.draw_rect(swatch_pos, Vec2i(19, 19), RGBA::black(), 1);
+        canvas.draw_rect(swatch_pos, Vec2i(19, 19), RGBA::black());
         draw_reset_button(canvas, reset_button_position(&self.r));
     }
 
@@ -378,7 +378,6 @@ fn draw_reset_button<R: CBF>(canvas: &Canvas<R>, pos: Vec2i) {
         pos,
         Vec2i(RESET_BUTTON_SIZE.0 - 1, RESET_BUTTON_SIZE.1 - 1),
         RGBA::black(),
-        1,
     );
     draw_text(canvas, Vec2i(pos.0 + 16, pos.1 + 8), "RESET", RGBA::black());
 }
@@ -454,7 +453,6 @@ fn draw_arrow_button<R: CBF>(canvas: &Canvas<R>, pos: Vec2i, color: RGBA, points
         pos,
         Vec2i(ARROW_SIZE - 1, ARROW_SIZE - 1),
         RGBA::black(),
-        1,
     );
 
     let center_x = pos.0 + ARROW_SIZE / 2;
